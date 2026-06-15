@@ -487,8 +487,15 @@ function parseSb(data) {
     const mn = ept(home.team?.displayName || home.team?.name || '');
     const vn = ept(away.team?.displayName || away.team?.name || '');
     const st = ev.status?.type?.name || '';
-    const isLive = st==='STATUS_IN_PROGRESS';
     const isEnc  = st==='STATUS_FINAL' || ev.status?.type?.completed===true;
+    const utcNow = Date.now();
+    const startedMs = ev.date ? utcNow - new Date(ev.date).getTime() : -1;
+    // Live: ESPN diz em andamento OU jogo começou há mais de 3min e não encerrou
+    const isLive = !isEnc && (
+      st==='STATUS_IN_PROGRESS' || st==='STATUS_HALFTIME' ||
+      st==='STATUS_END_PERIOD'  || st==='STATUS_OVERTIME' ||
+      st==='STATUS_SHOOTOUT'    || (startedMs > 3*60*1000)
+    );
     const isProx = !isLive && !isEnc;
 
     // Group from event or team lookup
@@ -517,14 +524,19 @@ function parseSb(data) {
       }
     }
 
+    // Lê placar sempre que disponível (mesmo antes de detectar live corretamente)
+    const rawH = home.score !== undefined && home.score !== '' ? parseInt(home.score) : NaN;
+    const rawA = away.score !== undefined && away.score !== '' ? parseInt(away.score) : NaN;
+    const hasScore = !isNaN(rawH) && !isNaN(rawA);
+
     return [{
       id:     ev.id,
       mn,vn,
       mF: `${fl(mn)} ${mn}`,
       vF: `${vn} ${fl(vn)}`,
-      gE: isProx ? null : parseInt(home.score||'0'),
-      gF: isProx ? null : parseInt(away.score||'0'),
-      min:   ev.status?.displayClock||'',
+      gE: (isLive||isEnc||hasScore) ? (hasScore?rawH:0) : null,
+      gF: (isLive||isEnc||hasScore) ? (hasScore?rawA:0) : null,
+      min:   ev.status?.displayClock||ev.status?.type?.shortDetail||'',
       status:isLive?'live':isEnc?'enc':'prox',
       grp:   gLet,
       dt:dtF, hr:hrF,
@@ -693,8 +705,9 @@ function renderAoVivo(jogos, todos) {
     let cls = isLive?'p-live':isProx?'p-prox':'p-enc';
     if(j.isBr && !isEnc) cls+=' p-brasil';
 
+    const minTxt = j.min && j.min!=='0:00' ? j.min : '';
     const top = isLive
-      ? `<span style="display:flex;align-items:center;gap:4px"><span class="pill-dot"></span>AO VIVO</span><span>${j.min||''}</span>`
+      ? `<span style="display:flex;align-items:center;gap:4px"><span class="pill-dot"></span>AO VIVO</span><span style="font-weight:700">${minTxt}</span>`
       : isProx
         ? `<span>⏰ PRÓXIMO</span><span>${j.hr}</span>`
         : `<span>✅ ENCERRADO</span><span>${j.dt}</span>`;
@@ -703,7 +716,7 @@ function renderAoVivo(jogos, todos) {
       ? `<div class="pill-score" style="font-size:13px;color:var(--verde);min-width:auto">${j.hr}</div>`
       : j.gE!==null
         ? `<div class="pill-score">${j.gE} – ${j.gF}</div>`
-        : `<div class="pill-score" style="font-size:13px;min-width:auto;color:var(--cinza)">vs</div>`;
+        : `<div class="pill-score" style="font-size:13px;min-width:auto;color:var(--cinza)">0 – 0</div>`;
 
     const venue = j.venue.split(',')[0] || '';
 
