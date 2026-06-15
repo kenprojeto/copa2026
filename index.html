@@ -461,9 +461,15 @@ function slugUrl(slug, path, qs='') {
 
 async function tryEspn(path, qs='') {
   const slugs = goodSlug ? [goodSlug, ...SLUGS.filter(s=>s!==goodSlug)] : SLUGS;
+  // Cache-buster: force ESPN a retornar dados frescos a cada chamada
+  const bust = `_t=${Math.floor(Date.now()/30000)}`; // troca a cada 30s
+  const fullQs = qs ? `${qs}&${bust}` : bust;
   for (const slug of slugs) {
     try {
-      const r = await fetch(slugUrl(slug,path,qs), {signal:AbortSignal.timeout(9000)});
+      const r = await fetch(slugUrl(slug,path,fullQs), {
+        signal: AbortSignal.timeout(9000),
+        cache: 'no-store',   // nunca usa cache do browser
+      });
       if (!r.ok) continue;
       const d = await r.json();
       goodSlug = slug;
@@ -1120,9 +1126,16 @@ async function boot(manual=false) {
 
   /* Próxima atualização */
   if(refreshTimer) clearTimeout(refreshTimer);
-  const delay = hasLive ? 60_000 : 4*60_000;
+  // Verifica se algum jogo começou nas últimas 2h (pode ainda estar sem status live na ESPN)
+  const nowMs = Date.now();
+  const jogoEmAndamento = todosJogos.some(j => {
+    if (!j.dateObj || j.status==='enc') return false;
+    const ms = nowMs - j.dateObj.getTime();
+    return ms > 0 && ms < 2*60*60*1000; // começou há menos de 2h
+  });
+  const delay = hasLive ? 30_000 : jogoEmAndamento ? 45_000 : 4*60_000;
   refreshTimer = setTimeout(()=>boot(false), delay);
-  document.getElementById('av-timer').textContent = hasLive ? '↻ ao vivo · 60s' : '↻ 4min';
+  document.getElementById('av-timer').textContent = hasLive ? '↻ ao vivo · 30s' : jogoEmAndamento ? '↻ 45s' : '↻ 4min';
 
   if(manual){
     document.getElementById('btn-att').textContent='🔄 Atualizar';
