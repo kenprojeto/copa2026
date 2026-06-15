@@ -188,6 +188,53 @@
 
     @keyframes spin{to{transform:rotate(360deg)}}
     .spin{display:inline-block;animation:spin .8s linear infinite}
+
+    /* ══ RANKINGS ══ */
+    .rnk-2col{display:grid;grid-template-columns:1fr;gap:14px}
+    @media(min-width:680px){.rnk-2col{grid-template-columns:1fr 1fr}}
+
+    .rnk-card{background:var(--bg-card);border:1px solid var(--cinza2);border-radius:var(--rl);overflow:hidden;margin-bottom:14px}
+    .rnk-card:last-child{margin-bottom:0}
+
+    .rnk-hdr{background:var(--bg2);padding:10px 14px;font-family:'Bebas Neue',display;font-size:17px;letter-spacing:1.5px;color:var(--amarelo);display:flex;align-items:center;gap:8px}
+    .rnk-sub-txt{padding:7px 14px;font-size:11px;color:var(--cinza);border-bottom:1px solid var(--cinza2)}
+
+    .rnk-row{display:flex;align-items:center;gap:7px;padding:7px 12px;border-bottom:1px solid rgba(48,54,61,.35);font-size:13px;transition:background .1s}
+    .rnk-row:last-child{border-bottom:none}
+    .rnk-row.hl{background:rgba(0,156,59,.09)}
+    .rnk-row:hover{background:rgba(255,255,255,.03)}
+
+    .rn{font-family:'Bebas Neue',display;font-size:17px;min-width:26px;text-align:center;flex-shrink:0;color:var(--cinza)}
+    .rn.gold{color:var(--ouro)}.rn.prat{color:var(--prata)}.rn.bron{color:#cd7f32}
+    .rnome{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .rval{font-family:'Bebas Neue',display;font-size:17px;color:var(--amarelo);min-width:28px;text-align:center;flex-shrink:0}
+    .rsub{font-size:10px;color:var(--cinza);flex-shrink:0;white-space:nowrap}
+    .rbarra-wrap{flex:1;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;margin:0 6px}
+    .rbarra{height:100%;border-radius:3px;transition:width .4s}
+
+    /* avança / não */
+    .badge-av{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;white-space:nowrap}
+    .av-sim{background:rgba(0,156,59,.2);color:#4ade80;border:1px solid rgba(0,156,59,.3)}
+    .av-nao{background:rgba(139,148,158,.08);color:var(--cinza);border:1px solid var(--cinza2)}
+
+    /* líderes */
+    .lid-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px}
+    @media(min-width:540px){.lid-grid{grid-template-columns:repeat(4,1fr)}}
+    @media(min-width:860px){.lid-grid{grid-template-columns:repeat(6,1fr)}}
+    .lid-tile{background:var(--bg2);border:1px solid var(--cinza2);border-radius:8px;padding:8px 6px;text-align:center;transition:border-color .2s}
+    .lid-tile.lbr{border-color:var(--verde);background:rgba(0,156,59,.08)}
+    .lid-grp{font-size:9px;font-weight:700;color:var(--cinza);letter-spacing:1.5px;text-transform:uppercase}
+    .lid-flag{font-size:22px;margin:3px 0 1px}
+    .lid-nome{font-size:10px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .lid-pts{font-family:'Bebas Neue',display;font-size:15px;color:var(--amarelo);margin-top:2px}
+
+    /* stats gerais */
+    .stats-tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:12px}
+    @media(min-width:480px){.stats-tiles{grid-template-columns:repeat(4,1fr)}}
+    .stile{background:var(--bg2);border-radius:9px;padding:13px 10px;text-align:center}
+    .stile-v{font-family:'Bebas Neue',display;font-size:28px;color:var(--amarelo);line-height:1}
+    .stile-l{font-size:9px;color:var(--cinza);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
+    .stile-s{font-size:11px;font-weight:600;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--branco)}
   </style>
 </head>
 <body>
@@ -257,6 +304,11 @@
       </div>
     </div>
     <div class="g-grid" id="g-grid"></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">📊 Rankings &amp; Estatísticas</div>
+    <div id="rankings"><div style="text-align:center;color:var(--cinza);padding:20px;font-size:13px"><span class="spin">⟳</span> Calculando rankings…</div></div>
   </div>
 
 </div>
@@ -809,6 +861,171 @@ function renderGrupos(grupos) {
 }
 
 /* ══════════════════════════════════════════
+   RANKINGS & ESTATÍSTICAS
+══════════════════════════════════════════ */
+function renderRankings(grupos) {
+  const el = document.getElementById('rankings');
+  if (!grupos?.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--cinza);padding:20px;font-size:13px">Aguardando dados da API…</div>';
+    return;
+  }
+
+  // Achatar todos os times com referência ao grupo
+  const allTeams = grupos.flatMap(g => g.times.map(t => ({ ...t, grpId: g.id, isBr: !!t.brasil })));
+
+  // Ranking geral: pts ▸ sg ▸ gp ▸ nome
+  const ranked = [...allTeams].sort((a,b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    if (b.sg  !== a.sg)  return b.sg  - a.sg;
+    if (b.gp  !== a.gp)  return b.gp  - a.gp;
+    return a.nome.localeCompare(b.nome, 'pt');
+  });
+
+  // 3ºs colocados de cada grupo (índice 2 após sortTimes)
+  const terceiros = grupos.map(g => {
+    const ts = sortTimes(g.times);
+    return ts[2] ? { grupo: g.id, time: ts[2] } : null;
+  }).filter(Boolean);
+
+  const terceirosSorted = [...terceiros].sort((a,b) => {
+    if (b.time.pts !== a.time.pts) return b.time.pts - a.time.pts;
+    if (b.time.sg  !== a.time.sg)  return b.time.sg  - a.time.sg;
+    if (b.time.gp  !== a.time.gp)  return b.time.gp  - a.time.gp;
+    return 0;
+  });
+
+  // Estatísticas globais
+  const totalGols  = allTeams.reduce((s,t) => s + t.gp, 0);
+  const totalJogos = allTeams.reduce((s,t) => s + t.j, 0) / 2;
+  const melhorAt = [...allTeams].filter(t=>t.j>0).sort((a,b)=>b.gp-a.gp)[0];
+  const melhorDf = [...allTeams].filter(t=>t.j>0).sort((a,b)=>a.gc-b.gc)[0];
+
+  // Grupos por média de gols/jogo
+  const grupoStats = grupos.map(g => {
+    const tot = g.times.reduce((s,t) => s + t.gp, 0);
+    const jg  = g.times.reduce((s,t) => s + t.j, 0) / 2;
+    return { id: g.id, tot, jg: Math.round(jg), media: jg > 0 ? tot/jg : 0 };
+  }).filter(g => g.jg > 0).sort((a,b) => b.media - a.media);
+
+  const maxMedia = grupoStats[0]?.media || 1;
+
+  // Cor por posição
+  const posColor = i => i===0?'var(--ouro)':i===1?'var(--prata)':i===2?'#cd7f32':'var(--cinza)';
+
+  el.innerHTML = `
+  <!-- STATS GERAIS -->
+  <div class="rnk-card">
+    <div class="rnk-hdr">⚽ Estatísticas Gerais da Copa</div>
+    <div class="stats-tiles">
+      <div class="stile">
+        <div class="stile-v">${Math.round(totalGols)}</div>
+        <div class="stile-l">Total de Gols</div>
+        <div class="stile-s">${totalJogos.toFixed(0)} jogos disputados</div>
+      </div>
+      <div class="stile">
+        <div class="stile-v">${totalJogos>0?(totalGols/totalJogos).toFixed(1):'—'}</div>
+        <div class="stile-l">Média Gols/Jogo</div>
+        <div class="stile-s">fase de grupos</div>
+      </div>
+      <div class="stile">
+        <div class="stile-v">${melhorAt?.emoji||'—'}</div>
+        <div class="stile-l">Melhor Ataque</div>
+        <div class="stile-s">${melhorAt?`${melhorAt.nome} · ${melhorAt.gp} gols`:'aguardando jogos'}</div>
+      </div>
+      <div class="stile">
+        <div class="stile-v">${melhorDf?.emoji||'—'}</div>
+        <div class="stile-l">Melhor Defesa</div>
+        <div class="stile-s">${melhorDf?`${melhorDf.nome} · ${melhorDf.gc} sofridos`:'aguardando jogos'}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rnk-2col">
+
+    <!-- RANKING GERAL -->
+    <div class="rnk-card">
+      <div class="rnk-hdr">🏅 Ranking Geral — Todas as Seleções</div>
+      ${ranked.slice(0,24).map((t,i)=>{
+        const pos=i+1;
+        const cc=pos===1?'gold':pos===2?'prat':pos===3?'bron':'';
+        return `<div class="rnk-row${t.isBr?' hl':''}">
+          <span class="rn${cc?' '+cc:''}">${pos}</span>
+          <span style="font-size:15px;flex-shrink:0">${t.emoji}</span>
+          <span class="rnome">${t.nome}</span>
+          <span class="rsub">GRP&nbsp;${t.grpId}</span>
+          <span class="rval">${t.pts}</span>
+          <span class="rsub">pts</span>
+          <span style="font-size:11px;min-width:40px;text-align:right;flex-shrink:0">${sgH(t.sg)}</span>
+        </div>`;
+      }).join('')}
+      ${ranked.length>24?`<div style="padding:8px 12px;font-size:11px;color:var(--cinza);text-align:center">+ ${ranked.length-24} seleções</div>`:''}
+    </div>
+
+    <!-- 3ºS COLOCADOS -->
+    <div class="rnk-card">
+      <div class="rnk-hdr">🎯 Disputa dos 3ºs Colocados</div>
+      <div class="rnk-sub-txt">Os <strong style="color:var(--amarelo)">8 melhores</strong> entre os 12 terceiros avançam para o mata-mata</div>
+      ${terceirosSorted.length
+        ? terceirosSorted.map((x,i)=>{
+            const t=x.time, av=i<8;
+            return `<div class="rnk-row">
+              <span class="rn" style="color:${av?'#4ade80':'var(--cinza)'}">${i+1}</span>
+              <span style="font-size:15px;flex-shrink:0">${t.emoji}</span>
+              <span class="rnome">${t.nome}</span>
+              <span class="rsub">GRP&nbsp;${x.grupo}</span>
+              <span class="rval">${t.pts}</span>
+              <span class="rsub">pts</span>
+              <span style="font-size:11px;min-width:34px;text-align:right;flex-shrink:0">${sgH(t.sg)}</span>
+              <span class="badge-av ${av?'av-sim':'av-nao'}">${av?'✅ avança':'–'}</span>
+            </div>`;
+          }).join('')
+        : '<div style="padding:16px;text-align:center;color:var(--cinza);font-size:12px">Aguardando 1ª rodada…</div>'
+      }
+    </div>
+
+  </div>
+
+  <!-- LÍDERES DOS GRUPOS -->
+  <div class="rnk-card">
+    <div class="rnk-hdr">👑 Líderes dos Grupos</div>
+    <div class="lid-grid">
+      ${['C','A','B','D','E','F','G','H','I','J','K','L'].map(id=>{
+        const g = grupos.find(g=>g.id===id);
+        if (!g) return '';
+        const lider = sortTimes(g.times)[0];
+        if (!lider) return '';
+        const semJogo = lider.j === 0;
+        return `<div class="lid-tile${g.isBr?' lbr':''}">
+          <div class="lid-grp">GRUPO ${id}${g.isBr?' 🇧🇷':''}</div>
+          <div class="lid-flag">${lider.emoji}</div>
+          <div class="lid-nome">${lider.nome}</div>
+          <div class="lid-pts">${semJogo?'—':lider.pts+' pts'}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+
+  ${grupoStats.length ? `
+  <!-- GRUPOS POR GOLS -->
+  <div class="rnk-card">
+    <div class="rnk-hdr">🔥 Grupos Mais Ofensivos — Média de Gols/Jogo</div>
+    ${grupoStats.map((g,i)=>`
+      <div class="rnk-row">
+        <span class="rn" style="color:${posColor(i)}">${i+1}</span>
+        <span class="rnome">Grupo ${g.id}</span>
+        <div class="rbarra-wrap">
+          <div class="rbarra" style="background:${i===0?'var(--verde)':i===1?'var(--prata)':'var(--cinza2)'};width:${(g.media/maxMedia*100).toFixed(0)}%"></div>
+        </div>
+        <span class="rval">${g.media.toFixed(1)}</span>
+        <span class="rsub">gols/jogo</span>
+        <span class="rsub" style="min-width:60px;text-align:right">(${g.tot} em ${g.jg}j)</span>
+      </div>
+    `).join('')}
+  </div>` : ''}
+  `;
+}
+
+/* ══════════════════════════════════════════
    LOOP PRINCIPAL DE ATUALIZAÇÃO
 ══════════════════════════════════════════ */
 function setBadge(state, txt) {
@@ -874,6 +1091,7 @@ async function boot(manual=false) {
   renderAoVivo(jogosHoje.length ? jogosHoje : todosJogos.filter(j=>j.status!=='enc'), todosJogos);
   renderBrCard();
   renderGrupos(grupos);
+  renderRankings(grupos);
   setTs();
 
   /* Badge */
@@ -903,6 +1121,7 @@ async function boot(manual=false) {
 renderBrCard();
 renderAgenda();
 renderGrupos(GF);   // mostra fallback imediatamente
+renderRankings(GF); // rankings com dados fallback
 boot(false);        // busca API em paralelo
 </script>
 </body>
