@@ -220,7 +220,7 @@
     .bsf.bm-br{border-color:var(--verde);box-shadow:0 0 10px rgba(0,156,59,.2)}
     .bsf.bm-td{opacity:.32;background:var(--bg2)}
     /* match content */
-    .bn{position:absolute;top:3px;left:5px;font-size:8px;color:var(--cinza);letter-spacing:.3px}
+
     .bt2{display:flex;align-items:center;gap:4px;padding:4px 6px 4px 6px}
     .bgrp{font-family:'Bebas Neue',display;font-size:10px;color:var(--cinza);background:rgba(139,148,158,.12);border-radius:3px;padding:0 3px;flex-shrink:0;min-width:14px;text-align:center;letter-spacing:.5px}
     .bt2+.bt2{border-top:1px solid rgba(48,54,61,.4)}
@@ -1013,23 +1013,21 @@ function renderChaveamento(grupos) {
   }
 
   // Match card: dois times por posição fixa
-  function mc(posA, posB, n) {
+  function mc(posA, posB) {
     const tA=gt(posA), tB=gt(posB);
     const br = tA?.brasil||tB?.brasil;
     return `<div class="bm${br?' bm-br':''}">
-      <span class="bn">J${n}</span>
       ${row(tA,posA,posA.slice(1))}${row(tB,posB,posB.slice(1))}
     </div>`;
   }
 
   // Match card: um lado é o melhor 3º de grupos elegíveis (slot oficial FIFA)
-  function mc3(posFixed, grpIds, n) {
+  function mc3(posFixed, grpIds) {
     const tFixed = gt(posFixed);
     const t3 = best3(grpIds);
     const br = tFixed?.brasil || t3?.brasil;
     const lbl = `3° (${grpIds.join('/')})`;
     return `<div class="bm${br?' bm-br':''} bm-3">
-      <span class="bn">J${n}</span>
       ${row(tFixed,posFixed,posFixed.slice(1))}${row(t3,lbl,t3?.grpId||'3°')}
     </div>`;
   }
@@ -1079,10 +1077,10 @@ function renderChaveamento(grupos) {
   // ═══════════════════════════════════════════════════
 
   const lR32 = `<div class="bt-col">
-    ${pair(mc3('1E',['A','B','C','D','F'],'74'), mc3('1I',['C','D','F','G','H'],'77'))}
-    ${pair(mc('2A','2B','73'),               mc('1F','2C','75'))}
-    ${pair(mc('2K','2L','83'),               mc('1H','2J','84'))}
-    ${pair(mc3('1D',['B','E','F','I','J'],'81'), mc3('1G',['A','E','H','I','J'],'82'))}
+    ${pair(mc3('1E',['A','B','C','D','F']), mc3('1I',['C','D','F','G','H']))}
+    ${pair(mc('2A','2B'),               mc('1F','2C'))}
+    ${pair(mc('2K','2L'),               mc('1H','2J'))}
+    ${pair(mc3('1D',['B','E','F','I','J']), mc3('1G',['A','E','H','I','J']))}
   </div>`;
 
   const lR16 = `<div class="bt-col">
@@ -1097,10 +1095,10 @@ function renderChaveamento(grupos) {
   const lSF = `<div class="bt-col bt-col-sf">${sf()}</div>`;
 
   const rR32 = `<div class="bt-col">
-    ${pair(mc('1C','2F','76'),               mc('2E','2I','78'))}
-    ${pair(mc3('1A',['C','E','F','H','I'],'79'), mc3('1L',['E','H','I','J','K'],'80'))}
-    ${pair(mc('1J','2H','86'),               mc('2D','2G','88'))}
-    ${pair(mc3('1B',['E','F','G','I','J'],'85'), mc3('1K',['D','E','I','J','L'],'87'))}
+    ${pair(mc('1C','2F'),               mc('2E','2I'))}
+    ${pair(mc3('1A',['C','E','F','H','I']), mc3('1L',['E','H','I','J','K']))}
+    ${pair(mc('1J','2H'),               mc('2D','2G'))}
+    ${pair(mc3('1B',['E','F','G','I','J']), mc3('1K',['D','E','I','J','L']))}
   </div>`;
 
   const rR16 = `<div class="bt-col">
