@@ -221,7 +221,8 @@
     .bsf.bm-td{opacity:.32;background:var(--bg2)}
     /* match content */
     .bn{position:absolute;top:3px;left:5px;font-size:8px;color:var(--cinza);letter-spacing:.3px}
-    .bt2{display:flex;align-items:center;gap:4px;padding:4px 6px 4px 18px}
+    .bt2{display:flex;align-items:center;gap:4px;padding:4px 6px 4px 6px}
+    .bgrp{font-family:'Bebas Neue',display;font-size:10px;color:var(--cinza);background:rgba(139,148,158,.12);border-radius:3px;padding:0 3px;flex-shrink:0;min-width:14px;text-align:center;letter-spacing:.5px}
     .bt2+.bt2{border-top:1px solid rgba(48,54,61,.4)}
     .be{font-size:13px;flex-shrink:0}
     .bnm{flex:1;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1001,9 +1002,10 @@ function renderChaveamento(grupos) {
     return g ? sortTimes(g.times)[parseInt(pos[0])-1]||null : null;
   }
 
-  function row(t, label) {
+  function row(t, label, grp) {
     const b = t?.brasil;
     return `<div class="bt2${b?' tb':''}">
+      ${grp?`<span class="bgrp">${grp}</span>`:''}
       <span class="be">${t?.emoji||'🏴'}</span>
       <span class="bnm">${t?.nome||label}</span>
       ${t?.j>0?`<span class="bp">${t.pts}</span>`:''}
@@ -1016,7 +1018,7 @@ function renderChaveamento(grupos) {
     const br = tA?.brasil||tB?.brasil;
     return `<div class="bm${br?' bm-br':''}">
       <span class="bn">J${n}</span>
-      ${row(tA,posA)}${row(tB,posB)}
+      ${row(tA,posA,posA.slice(1))}${row(tB,posB,posB.slice(1))}
     </div>`;
   }
 
@@ -1028,7 +1030,7 @@ function renderChaveamento(grupos) {
     const lbl = `3° (${grpIds.join('/')})`;
     return `<div class="bm${br?' bm-br':''} bm-3">
       <span class="bn">J${n}</span>
-      ${row(tFixed,posFixed)}${row(t3,lbl)}
+      ${row(tFixed,posFixed,posFixed.slice(1))}${row(t3,lbl,t3?.grpId||'3°')}
     </div>`;
   }
 
