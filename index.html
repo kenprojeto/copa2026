@@ -189,6 +189,45 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     .spin{display:inline-block;animation:spin .8s linear infinite}
 
+    /* ══ CHAVEAMENTO ══ */
+    .chav-note{font-size:11px;color:var(--cinza);padding:8px 14px;border-bottom:1px solid var(--cinza2);background:var(--bg2)}
+    .chav-phase{padding:10px 14px 4px;font-family:'Bebas Neue',display;font-size:13px;letter-spacing:2px;color:var(--cinza)}
+
+    /* grade de confrontos */
+    .chav-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 10px}
+    @media(min-width:640px){.chav-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(min-width:900px){.chav-grid{grid-template-columns:repeat(4,1fr)}}
+
+    .cm{background:var(--bg2);border:1px solid var(--cinza2);border-radius:10px;overflow:hidden;position:relative}
+    .cm.cm-br{border-color:var(--verde);box-shadow:0 0 12px rgba(0,156,59,.2)}
+    .cm.cm-3rd{border-style:dashed;opacity:.8}
+    .cm-num{position:absolute;top:5px;left:7px;font-size:9px;color:var(--cinza);font-weight:700;letter-spacing:.5px}
+    .cm-quad{position:absolute;top:5px;right:7px;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px}
+    .cm-quad.q1{background:rgba(0,100,200,.2);color:#60a5fa}
+    .cm-quad.q2{background:rgba(180,60,0,.2);color:#fb923c}
+    .cm-quad.q3{background:rgba(140,0,200,.2);color:#c084fc}
+    .cm-quad.q4{background:rgba(0,150,80,.2);color:#4ade80}
+
+    .cm-body{padding:10px 8px 8px}
+    .cm-time{display:flex;align-items:center;gap:6px;padding:5px 0}
+    .cm-time:first-child{border-bottom:1px solid rgba(48,54,61,.5)}
+    .cm-flag{font-size:18px;flex-shrink:0}
+    .cm-info{flex:1;overflow:hidden}
+    .cm-nome{font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .cm-pos{font-size:9px;color:var(--cinza);margin-top:1px}
+    .cm-pts{font-family:'Bebas Neue',display;font-size:14px;color:var(--amarelo);flex-shrink:0}
+    .cm-vs{text-align:center;font-size:9px;font-weight:700;color:var(--cinza);padding:2px 0;letter-spacing:1px}
+
+    .cm-tbd{display:flex;align-items:center;justify-content:center;padding:18px 8px;font-size:11px;color:var(--cinza);text-align:center;line-height:1.4}
+
+    /* path visual (SF/Final) */
+    .chav-path{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 10px}
+    @media(min-width:640px){.chav-path{grid-template-columns:repeat(4,1fr)}}
+    .cp{background:var(--bg2);border:1px solid var(--cinza2);border-radius:10px;padding:10px 12px;text-align:center}
+    .cp-fase{font-size:9px;font-weight:700;color:var(--cinza);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+    .cp-match{font-size:11px;color:var(--branco);line-height:1.5}
+    .cp-arrow{color:var(--amarelo);font-size:12px;margin:0 3px}
+
     /* ══ RANKINGS ══ */
     .rnk-2col{display:grid;grid-template-columns:1fr;gap:14px}
     @media(min-width:680px){.rnk-2col{grid-template-columns:1fr 1fr}}
@@ -304,6 +343,11 @@
       </div>
     </div>
     <div class="g-grid" id="g-grid"></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">🏆 Chaveamento — Mata-Mata</div>
+    <div id="chaveamento"><div style="text-align:center;color:var(--cinza);padding:20px;font-size:13px"><span class="spin">⟳</span> Montando chaveamento…</div></div>
   </div>
 
   <div class="sec">
@@ -880,6 +924,180 @@ function renderGrupos(grupos) {
 }
 
 /* ══════════════════════════════════════════
+   CHAVEAMENTO — MATA-MATA
+══════════════════════════════════════════ */
+// Grupos pares da Copa 2026: A-B, C-D, E-F, G-H, I-J, K-L
+// R32 pré-determinado: 1A vs 2B, 1B vs 2A, 1C vs 2D... + 4 jogos entre 8 melhores 3ºs
+const R32 = [
+  // ── QUADRANTE 1 (azul) ── leva ao SF1 → Final
+  {n:'49', a:'1A', b:'2B', q:'q1'}, {n:'50', a:'1C', b:'2D', q:'q1'},
+  {n:'51', a:'1B', b:'2A', q:'q1'}, {n:'52', a:'1D', b:'2C', q:'q1'},
+  // ── QUADRANTE 2 (laranja) ── leva ao SF1 → Final
+  {n:'53', a:'1E', b:'2F', q:'q2'}, {n:'54', a:'1G', b:'2H', q:'q2'},
+  {n:'55', a:'1F', b:'2E', q:'q2'}, {n:'56', a:'1H', b:'2G', q:'q2'},
+  // ── QUADRANTE 3 (roxo) ── leva ao SF2 → Final
+  {n:'57', a:'1I', b:'2J', q:'q3'}, {n:'58', a:'1K', b:'2L', q:'q3'},
+  {n:'59', a:'1J', b:'2I', q:'q3'}, {n:'60', a:'1L', b:'2K', q:'q3'},
+  // ── QUADRANTE 4 (verde) — 3ºs colocados ──
+  {n:'61', a:'3°1', b:'3°8', q:'q4', is3rd:true},
+  {n:'62', a:'3°2', b:'3°7', q:'q4', is3rd:true},
+  {n:'63', a:'3°3', b:'3°6', q:'q4', is3rd:true},
+  {n:'64', a:'3°4', b:'3°5', q:'q4', is3rd:true},
+];
+const QNAMES = {q1:'Chave 1',q2:'Chave 2',q3:'Chave 3',q4:'3ºs Colocados'};
+const QCLS   = {q1:'q1',q2:'q2',q3:'q3',q4:'q4'};
+
+function resolvePos(pos, byGrp, terceiros) {
+  // pos é '1A', '2B', '1C', etc.
+  const rank = parseInt(pos[0]);
+  const grpId = pos.slice(1);
+  if (grpId && byGrp[grpId]) {
+    const sorted = sortTimes(byGrp[grpId].times);
+    const t = sorted[rank - 1];
+    if (t) return { ...t, pos };
+  }
+  return null;
+}
+
+function renderChaveamento(grupos) {
+  const el = document.getElementById('chaveamento');
+  if (!grupos?.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--cinza);padding:20px;font-size:13px">Aguardando dados…</div>';
+    return;
+  }
+
+  // Index por grupo
+  const byGrp = {};
+  grupos.forEach(g => byGrp[g.id] = g);
+
+  // 3ºs colocados ordenados
+  const terceiros = grupos.map(g => {
+    const sorted = sortTimes(g.times);
+    return sorted[2] ? { ...sorted[2], grpId: g.id } : null;
+  }).filter(Boolean).sort((a,b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    if (b.sg  !== a.sg)  return b.sg  - a.sg;
+    if (b.gp  !== a.gp)  return b.gp  - a.gp;
+    return 0;
+  });
+
+  // Monta card de confronto
+  function matchCard(m) {
+    if (m.is3rd) {
+      // Rank do 3º (ex: '3°1' = melhor 3º)
+      const rankA = parseInt(m.a.replace('3°','')) - 1;
+      const rankB = parseInt(m.b.replace('3°','')) - 1;
+      const tA = terceiros[rankA];
+      const tB = terceiros[rankB];
+      if (!tA && !tB) {
+        return `<div class="cm cm-3rd">
+          <span class="cm-num">J${m.n}</span>
+          <span class="cm-quad ${QCLS[m.q]}">${QNAMES[m.q]}</span>
+          <div class="cm-tbd">Aguardando<br>3ºs colocados</div>
+        </div>`;
+      }
+      return timeCard(m, tA, `3°${rankA+1} colocado`, tB, `3°${rankB+1} colocado`);
+    }
+    const tA = resolvePos(m.a, byGrp, terceiros);
+    const tB = resolvePos(m.b, byGrp, terceiros);
+    return timeCard(m, tA, m.a, tB, m.b);
+  }
+
+  function timeCard(m, tA, labelA, tB, labelB) {
+    const isBr = tA?.brasil || tB?.brasil;
+    function row(t, label) {
+      if (!t) return `<div class="cm-time">
+        <span class="cm-flag">🏴</span>
+        <div class="cm-info"><div class="cm-nome" style="color:var(--cinza)">A definir</div><div class="cm-pos">${label}</div></div>
+      </div>`;
+      return `<div class="cm-time${t.brasil?' hl':''}">
+        <span class="cm-flag">${t.emoji||'🏴'}</span>
+        <div class="cm-info">
+          <div class="cm-nome"${t.brasil?' style="color:var(--verde)"':''}>${t.nome}</div>
+          <div class="cm-pos">${label}</div>
+        </div>
+        <span class="cm-pts">${t.pts}pts</span>
+      </div>`;
+    }
+    return `<div class="cm${isBr?' cm-br':''}${m.is3rd?' cm-3rd':''}">
+      <span class="cm-num">J${m.n}</span>
+      <span class="cm-quad ${QCLS[m.q]}">${QNAMES[m.q]}</span>
+      <div class="cm-body">
+        ${row(tA, labelA)}
+        <div class="cm-vs">VS</div>
+        ${row(tB, labelB)}
+      </div>
+    </div>`;
+  }
+
+  // Agrupa por quadrante para mostrar seções
+  const byQ = {q1:[],q2:[],q3:[],q4:[]};
+  R32.forEach(m => byQ[m.q].push(matchCard(m)));
+
+  // Conta quantos jogos de Brasil
+  const brPos = [];
+  R32.filter(m=>!m.is3rd).forEach(m => {
+    const tA = resolvePos(m.a, byGrp, terceiros);
+    const tB = resolvePos(m.b, byGrp, terceiros);
+    if (tA?.brasil || tB?.brasil) {
+      const oponente = tA?.brasil ? tB : tA;
+      brPos.push({ jogo: m.n, label: tA?.brasil ? m.a : m.b, op: oponente });
+    }
+  });
+
+  const brMsg = brPos.length
+    ? `🇧🇷 Brasil nas oitavas: ${brPos.map(x => `Jogo ${x.jogo} (${x.label}) vs ${x.op?.nome||'A definir'}`).join(' · ')}`
+    : '🇧🇷 Brasil: posição no grupo ainda pode mudar';
+
+  el.innerHTML = `
+  <div class="rnk-card">
+    <div class="chav-note">
+      ⚡ Chaveamento baseado na classificação <strong style="color:var(--amarelo)">atual</strong> — atualiza automaticamente.
+      Formato Copa 2026: 32 times no mata-mata (1º e 2º de cada grupo + 8 melhores 3ºs).
+    </div>
+    <div class="chav-note" style="color:${brPos.length?'#4ade80':'var(--cinza)'}">
+      ${brMsg}
+    </div>
+
+    <div class="chav-phase">⚽ OITAVAS — CHAVE 1 <span style="font-size:10px;color:var(--cinza)">(Grupos A·B·C·D)</span></div>
+    <div class="chav-grid">${byQ.q1.join('')}</div>
+
+    <div class="chav-phase">⚽ OITAVAS — CHAVE 2 <span style="font-size:10px;color:var(--cinza)">(Grupos E·F·G·H)</span></div>
+    <div class="chav-grid">${byQ.q2.join('')}</div>
+
+    <div class="chav-phase">⚽ OITAVAS — CHAVE 3 <span style="font-size:10px;color:var(--cinza)">(Grupos I·J·K·L)</span></div>
+    <div class="chav-grid">${byQ.q3.join('')}</div>
+
+    <div class="chav-phase">🎯 OITAVAS — 3ºS COLOCADOS <span style="font-size:10px;color:var(--cinza)">(8 melhores 3ºs entre os 12 grupos)</span></div>
+    <div class="chav-grid">${byQ.q4.join('')}</div>
+  </div>
+
+  <!-- Caminho até a Final -->
+  <div class="rnk-card" style="margin-top:14px">
+    <div class="rnk-hdr">🗓 Caminho até a Final</div>
+    <div class="chav-path">
+      <div class="cp">
+        <div class="cp-fase">Oitavas (R32)</div>
+        <div class="cp-match">16 jogos<br><span style="color:var(--cinza);font-size:10px">27 Jun – 3 Jul</span></div>
+      </div>
+      <div class="cp">
+        <div class="cp-fase">Quartas (QF)</div>
+        <div class="cp-match">8 jogos<br><span style="color:var(--cinza);font-size:10px">4 – 7 Jul</span></div>
+      </div>
+      <div class="cp">
+        <div class="cp-fase">Semifinais (SF)</div>
+        <div class="cp-match">2 jogos<br><span style="color:var(--cinza);font-size:10px">14 – 15 Jul</span></div>
+      </div>
+      <div class="cp" style="border-color:var(--ouro)">
+        <div class="cp-fase" style="color:var(--ouro)">🏆 Final</div>
+        <div class="cp-match">MetLife Stadium<br><span style="color:var(--cinza);font-size:10px">19 Jul 2026</span></div>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+/* ══════════════════════════════════════════
    RANKINGS & ESTATÍSTICAS
 ══════════════════════════════════════════ */
 function renderRankings(grupos) {
@@ -1110,6 +1328,7 @@ async function boot(manual=false) {
   renderAoVivo(jogosHoje.length ? jogosHoje : todosJogos.filter(j=>j.status!=='enc'), todosJogos);
   renderBrCard();
   renderGrupos(grupos);
+  renderChaveamento(grupos);
   renderRankings(grupos);
   setTs();
 
@@ -1146,8 +1365,9 @@ async function boot(manual=false) {
 /* ── INIT ── */
 renderBrCard();
 renderAgenda();
-renderGrupos(GF);   // mostra fallback imediatamente
-renderRankings(GF); // rankings com dados fallback
+renderGrupos(GF);       // mostra fallback imediatamente
+renderChaveamento(GF);  // chaveamento com dados fallback
+renderRankings(GF);     // rankings com dados fallback
 boot(false);        // busca API em paralelo
 </script>
 </body>
