@@ -229,6 +229,20 @@
     .bp{font-family:'Bebas Neue',display;font-size:12px;color:var(--amarelo);flex-shrink:0}
     .bt2.tb{background:rgba(0,156,59,.08)}.bt2.tb .bnm{color:var(--verde)}
     .bd{padding:6px;text-align:center}.bd span{display:block;font-size:9px;color:var(--cinza);letter-spacing:.8px}
+    /* ── TIMELINE FASE DE GRUPOS ── */
+    .tl-wrap{border-bottom:1px solid var(--cinza2);padding-bottom:2px}
+    .tl-title{padding:10px 14px 6px;font-family:'Bebas Neue',display;font-size:15px;letter-spacing:1.5px;color:var(--cinza)}
+    .tl-scroll{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 14px 12px;scroll-snap-type:x mandatory}
+    .tl-day{flex-shrink:0;background:var(--bg2);border:1px solid var(--cinza2);border-radius:8px;padding:8px 10px;min-width:180px;scroll-snap-align:start}
+    .tl-dt{font-family:'Bebas Neue',display;font-size:13px;letter-spacing:1px;color:var(--amarelo);margin-bottom:6px;border-bottom:1px solid var(--cinza2);padding-bottom:4px}
+    .tl-row{display:flex;align-items:center;gap:4px;padding:3px 0;font-size:10px;font-weight:600;white-space:nowrap}
+    .tl-row+.tl-row{border-top:1px solid rgba(48,54,61,.5)}
+    .tl-row.tl-br{background:rgba(0,156,59,.07);border-radius:4px;padding:3px 4px;margin:1px -4px}
+    .tl-row.tl-br .tl-mn,.tl-row.tl-br .tl-vn{color:var(--verde)}
+    .tl-grp{font-family:'Bebas Neue',display;font-size:10px;background:rgba(139,148,158,.15);border-radius:3px;padding:0 3px;color:var(--cinza);flex-shrink:0}
+    .tl-mn{flex:1;overflow:hidden;text-overflow:ellipsis;text-align:right;color:var(--branco)}
+    .tl-sc{font-family:'Bebas Neue',display;font-size:13px;color:var(--amarelo);flex-shrink:0;letter-spacing:1px;padding:0 4px}
+    .tl-vn{flex:1;overflow:hidden;text-overflow:ellipsis;text-align:left;color:var(--branco)}
     /* round header row above bracket */
     .bt-hdr-row{display:flex;align-items:stretch;width:max-content;margin:0 auto;padding:0 8px}
     .bt-hdr{width:128px;flex-shrink:0;text-align:center;font-size:9px;font-weight:700;color:var(--cinza);letter-spacing:1.5px;padding:8px 0 4px;text-transform:uppercase}
@@ -972,7 +986,7 @@ function resolvePos(pos, byGrp, terceiros) {
   return null;
 }
 
-function renderChaveamento(grupos) {
+function renderChaveamento(grupos, jogos) {
   const el = document.getElementById('chaveamento');
   if (!grupos?.length) {
     el.innerHTML = '<div style="text-align:center;color:var(--cinza);padding:20px;font-size:13px">Aguardando dados…</div>';
@@ -1112,15 +1126,46 @@ function renderChaveamento(grupos) {
 
   const rSF = `<div class="bt-col bt-col-sf">${sf()}</div>`;
 
+  // ─── TIMELINE DE JOGOS ENCERRADOS ───
+  const encerrados = (jogos||[])
+    .filter(j => j.status === 'enc')
+    .sort((a,b) => (a.dateObj||0) - (b.dateObj||0));
+
+  const byDate = {};
+  encerrados.forEach(j => {
+    const key = j.dt || '—';
+    if (!byDate[key]) byDate[key] = [];
+    byDate[key].push(j);
+  });
+
+  const tlHTML = Object.entries(byDate).length ? `
+    <div class="tl-wrap">
+      <div class="tl-title">📅 Fase de Grupos — Resultados</div>
+      <div class="tl-scroll">
+        ${Object.entries(byDate).map(([dt, gs]) => `
+          <div class="tl-day">
+            <div class="tl-dt">${dt}</div>
+            ${gs.map(g => `
+              <div class="tl-row${g.isBr?' tl-br':''}">
+                <span class="tl-grp">${g.grp}</span>
+                <span class="tl-mn">${fl(g.mn)} ${g.mn}</span>
+                <span class="tl-sc">${g.gE} – ${g.gF}</span>
+                <span class="tl-vn">${g.vn} ${fl(g.vn)}</span>
+              </div>`).join('')}
+          </div>`).join('')}
+      </div>
+    </div>` : '';
+
   el.innerHTML = `
   <div class="rnk-card">
     <div class="rnk-hdr">🏆 Chaveamento Oficial — Mata-Mata FIFA 2026</div>
+    ${tlHTML}
     <div class="bt-note">
       ⚡ Baseado na classificação <strong style="color:var(--amarelo)">atual</strong> — atualiza automaticamente
       &nbsp;·&nbsp; ${brMsg}
     </div>
     <div class="bt-note" style="color:var(--cinza);font-size:10px;padding-top:0">
-      Chaveamento oficial FIFA · Brasil (2°C) fica no J75 do lado esquerdo · ← role para ver completo →
+      Chaveamento oficial FIFA · Brasil (2°C) fica no lado esquerdo · ← role para ver o bracket completo →
     </div>
 
     <!-- Cabeçalho das colunas -->
@@ -1395,7 +1440,7 @@ async function boot(manual=false) {
   renderAoVivo(jogosHoje.length ? jogosHoje : todosJogos.filter(j=>j.status!=='enc'), todosJogos);
   renderBrCard();
   renderGrupos(grupos);
-  renderChaveamento(grupos);
+  renderChaveamento(grupos, todosJogos);
   renderRankings(grupos);
   setTs();
 
@@ -1432,9 +1477,9 @@ async function boot(manual=false) {
 /* ── INIT ── */
 renderBrCard();
 renderAgenda();
-renderGrupos(GF);       // mostra fallback imediatamente
-renderChaveamento(GF);  // chaveamento com dados fallback
-renderRankings(GF);     // rankings com dados fallback
+renderGrupos(GF);           // mostra fallback imediatamente
+renderChaveamento(GF, []);  // chaveamento com dados fallback
+renderRankings(GF);         // rankings com dados fallback
 boot(false);        // busca API em paralelo
 </script>
 </body>
