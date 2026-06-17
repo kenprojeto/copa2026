@@ -981,154 +981,185 @@ function renderChaveamento(grupos) {
   const byGrp = {};
   grupos.forEach(g => byGrp[g.id] = g);
 
-  // 3ºs colocados ordenados por pts→sg→gp
-  const t3 = grupos.map(g => {
-    const s = sortTimes(g.times);
-    return s[2] ? { ...s[2], grpId: g.id } : null;
-  }).filter(Boolean).sort((a,b) => {
-    if (b.pts !== a.pts) return b.pts - a.pts;
-    if (b.sg  !== a.sg)  return b.sg  - a.sg;
-    return b.gp - a.gp;
-  });
+  // Melhor 3º de um conjunto específico de grupos (para slots de 3ºs colocados oficiais)
+  function best3(grpIds) {
+    return grpIds.flatMap(id => {
+      const g = byGrp[id];
+      if (!g) return [];
+      const s = sortTimes(g.times);
+      return s[2] ? [{ ...s[2], grpId: id }] : [];
+    }).sort((a,b) => {
+      if (b.pts !== a.pts) return b.pts - a.pts;
+      if (b.sg  !== a.sg)  return b.sg  - a.sg;
+      return b.gp - a.gp;
+    })[0] || null;
+  }
 
+  // Time por posição fixa: '1A', '2C', '1F', etc.
   function gt(pos) {
-    if (pos.startsWith('3°')) return t3[parseInt(pos.replace('3°',''))-1]||null;
     const g = byGrp[pos.slice(1)];
     return g ? sortTimes(g.times)[parseInt(pos[0])-1]||null : null;
   }
 
-  // Match card
-  function mc(posA, posB, n, is3) {
+  function row(t, label) {
+    const b = t?.brasil;
+    return `<div class="bt2${b?' tb':''}">
+      <span class="be">${t?.emoji||'🏴'}</span>
+      <span class="bnm">${t?.nome||label}</span>
+      ${t?.j>0?`<span class="bp">${t.pts}</span>`:''}
+    </div>`;
+  }
+
+  // Match card: dois times por posição fixa
+  function mc(posA, posB, n) {
     const tA=gt(posA), tB=gt(posB);
     const br = tA?.brasil||tB?.brasil;
-    function row(t,pos) {
-      const b=t?.brasil;
-      return `<div class="bt2${b?' tb':''}">
-        <span class="be">${t?.emoji||'🏴'}</span>
-        <span class="bnm">${t?.nome||pos}</span>
-        ${t?.j>0?`<span class="bp">${t.pts}</span>`:''}
-      </div>`;
-    }
-    return `<div class="bm${br?' bm-br':''}${is3?' bm-3':''}">
-      <span class="bn">${n?'J'+n:''}</span>
+    return `<div class="bm${br?' bm-br':''}">
+      <span class="bn">J${n}</span>
       ${row(tA,posA)}${row(tB,posB)}
     </div>`;
   }
 
-  // TBD match card
+  // Match card: um lado é o melhor 3º de grupos elegíveis (slot oficial FIFA)
+  function mc3(posFixed, grpIds, n) {
+    const tFixed = gt(posFixed);
+    const t3 = best3(grpIds);
+    const br = tFixed?.brasil || t3?.brasil;
+    const lbl = `3° (${grpIds.join('/')})`;
+    return `<div class="bm${br?' bm-br':''} bm-3">
+      <span class="bn">J${n}</span>
+      ${row(tFixed,posFixed)}${row(t3,lbl)}
+    </div>`;
+  }
+
+  // Slot TBD (rodadas seguintes)
   function td(label) {
     return `<div class="bm bm-td"><div class="bd"><span class="bp" style="font-size:9px;letter-spacing:1px">${label}</span><span style="font-size:9px;color:var(--cinza)">A definir</span></div></div>`;
   }
 
-  // SF single (special wrapper)
-  function sf(label) {
-    return `<div class="bsf bm-td"><div class="bd"><span class="bp" style="font-size:9px;letter-spacing:1px">${label}</span><span style="font-size:9px;color:var(--cinza)">A definir</span></div></div>`;
+  function sf() {
+    return `<div class="bsf bm-td"><div class="bd"><span class="bp" style="font-size:9px;letter-spacing:1px">SEMI</span><span style="font-size:9px;color:var(--cinza)">A definir</span></div></div>`;
   }
 
-  // Pair wrapper (vertical connector)
-  function pair(...cards) { return `<div class="bt-pair">${cards.join('')}</div>`; }
+  // Wrapper de par (conector vertical CSS via ::after)
+  function pair(a, b) { return `<div class="bt-pair">${a}${b}</div>`; }
 
-  // Brasil nas oitavas
-  const allR32 = [
-    {n:'49',a:'1A',b:'2B'},{n:'51',a:'1B',b:'2A'},{n:'50',a:'1C',b:'2D'},{n:'52',a:'1D',b:'2C'},
-    {n:'53',a:'1E',b:'2F'},{n:'55',a:'1F',b:'2E'},{n:'54',a:'1G',b:'2H'},{n:'56',a:'1H',b:'2G'},
-    {n:'57',a:'1I',b:'2J'},{n:'59',a:'1J',b:'2I'},{n:'58',a:'1K',b:'2L'},{n:'60',a:'1L',b:'2K'},
-    {n:'61',a:'3°1',b:'3°8',is3:true},{n:'63',a:'3°3',b:'3°6',is3:true},
-    {n:'62',a:'3°2',b:'3°7',is3:true},{n:'64',a:'3°4',b:'3°5',is3:true},
-  ];
-  let brMsg = '🇧🇷 Posição do Brasil ainda pode mudar nas oitavas';
-  allR32.forEach(m=>{
-    const tA=gt(m.a),tB=gt(m.b);
-    if(tA?.brasil||tB?.brasil){
-      const op=tA?.brasil?tB:tA;
-      brMsg=`🇧🇷 Brasil nas oitavas: J${m.n} vs <strong style="color:var(--branco)">${op?.nome||'A definir'}</strong>`;
-    }
-  });
+  // ─── Mensagem Brasil ───
+  // Brasil (2°C): joga M75 → 1F vs 2C
+  // Brasil (1°C): joga M76 → 1C vs 2F
+  const br1C = gt('1C'), br2C = gt('2C');
+  let brMsg = '🇧🇷 Posição do Brasil ainda pode mudar';
+  if (br1C?.brasil) {
+    const op = gt('2F');
+    brMsg = `🇧🇷 Brasil (1°C) na Rodada de 32: J76 vs <strong style="color:var(--branco)">${op?.nome||'2° Grupo F'}</strong>`;
+  } else if (br2C?.brasil) {
+    const op = gt('1F');
+    brMsg = `🇧🇷 Brasil (2°C) na Rodada de 32: J75 vs <strong style="color:var(--branco)">${op?.nome||'1° Grupo F'}</strong>`;
+  }
 
   const sp = '<div class="bt-sp"></div>';
 
-  // ─── LEFT HALF (Grupos A-H) ───
-  const lR32 = `<div class="bt-col">
-    ${pair(mc('1A','2B','49'),mc('1B','2A','51'))}
-    ${pair(mc('1C','2D','50'),mc('1D','2C','52'))}
-    ${pair(mc('1E','2F','53'),mc('1F','2E','55'))}
-    ${pair(mc('1G','2H','54'),mc('1H','2G','56'))}
-  </div>`;
-  const lR16 = `<div class="bt-col">
-    ${pair(td('QUARTAS'),td('QUARTAS'))}
-    ${pair(td('QUARTAS'),td('QUARTAS'))}
-  </div>`;
-  const lQF = `<div class="bt-col">
-    ${pair(td('SEMI'),td('SEMI'))}
-  </div>`;
-  const lSF = `<div class="bt-col bt-col-sf">${sf('SEMI-FINAL')}</div>`;
+  // ═══════════════════════════════════════════════════
+  // CHAVEAMENTO OFICIAL FIFA 2026 (verificado Wikipedia)
+  // Fonte: https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_knockout_stage
+  //
+  // LADO ESQUERDO → SF101:
+  //   Par 1: M74(1E vs 3°A/B/C/D/F) + M77(1I vs 3°C/D/F/G/H) → M89 → QF97
+  //   Par 2: M73(2A vs 2B) + M75(1F vs 2C*Brasil) → M90 → QF97
+  //   Par 3: M83(2K vs 2L) + M84(1H vs 2J) → M93 → QF98
+  //   Par 4: M81(1D*EUA vs 3°B/E/F/I/J) + M82(1G vs 3°A/E/H/I/J) → M94 → QF98
+  //
+  // LADO DIREITO → SF102:
+  //   Par 1: M76(1C*Brasil vs 2F) + M78(2E vs 2I) → M91 → QF99
+  //   Par 2: M79(1A vs 3°C/E/F/H/I) + M80(1L vs 3°E/H/I/J/K) → M92 → QF99
+  //   Par 3: M86(1J vs 2H) + M88(2D vs 2G) → M95 → QF100
+  //   Par 4: M85(1B vs 3°E/F/G/I/J) + M87(1K vs 3°D/E/I/J/L) → M96 → QF100
+  // ═══════════════════════════════════════════════════
 
-  // ─── RIGHT HALF (Grupos I-L + 3ºs) ───
+  const lR32 = `<div class="bt-col">
+    ${pair(mc3('1E',['A','B','C','D','F'],'74'), mc3('1I',['C','D','F','G','H'],'77'))}
+    ${pair(mc('2A','2B','73'),               mc('1F','2C','75'))}
+    ${pair(mc('2K','2L','83'),               mc('1H','2J','84'))}
+    ${pair(mc3('1D',['B','E','F','I','J'],'81'), mc3('1G',['A','E','H','I','J'],'82'))}
+  </div>`;
+
+  const lR16 = `<div class="bt-col">
+    ${pair(td('M89'),td('M90'))}
+    ${pair(td('M93'),td('M94'))}
+  </div>`;
+
+  const lQF = `<div class="bt-col">
+    ${pair(td('QF · M97'),td('QF · M98'))}
+  </div>`;
+
+  const lSF = `<div class="bt-col bt-col-sf">${sf()}</div>`;
+
   const rR32 = `<div class="bt-col">
-    ${pair(mc('1I','2J','57'),mc('1J','2I','59'))}
-    ${pair(mc('3°1','3°8','61',true),mc('3°3','3°6','63',true))}
-    ${pair(mc('1K','2L','58'),mc('1L','2K','60'))}
-    ${pair(mc('3°2','3°7','62',true),mc('3°4','3°5','64',true))}
+    ${pair(mc('1C','2F','76'),               mc('2E','2I','78'))}
+    ${pair(mc3('1A',['C','E','F','H','I'],'79'), mc3('1L',['E','H','I','J','K'],'80'))}
+    ${pair(mc('1J','2H','86'),               mc('2D','2G','88'))}
+    ${pair(mc3('1B',['E','F','G','I','J'],'85'), mc3('1K',['D','E','I','J','L'],'87'))}
   </div>`;
+
   const rR16 = `<div class="bt-col">
-    ${pair(td('QUARTAS'),td('QUARTAS'))}
-    ${pair(td('QUARTAS'),td('QUARTAS'))}
+    ${pair(td('M91'),td('M92'))}
+    ${pair(td('M95'),td('M96'))}
   </div>`;
+
   const rQF = `<div class="bt-col">
-    ${pair(td('SEMI'),td('SEMI'))}
+    ${pair(td('QF · M99'),td('QF · M100'))}
   </div>`;
-  const rSF = `<div class="bt-col bt-col-sf">${sf('SEMI-FINAL')}</div>`;
+
+  const rSF = `<div class="bt-col bt-col-sf">${sf()}</div>`;
 
   el.innerHTML = `
   <div class="rnk-card">
-    <div class="rnk-hdr">🏆 Chaveamento — Mata-Mata</div>
+    <div class="rnk-hdr">🏆 Chaveamento Oficial — Mata-Mata FIFA 2026</div>
     <div class="bt-note">
       ⚡ Baseado na classificação <strong style="color:var(--amarelo)">atual</strong> — atualiza automaticamente
       &nbsp;·&nbsp; ${brMsg}
     </div>
     <div class="bt-note" style="color:var(--cinza);font-size:10px;padding-top:0">
-      Esquerda: Grupos A–H &nbsp;·&nbsp; Direita: Grupos I–L + 3ºs colocados &nbsp;·&nbsp; ← role para ver completo →
+      Chaveamento oficial FIFA · Brasil (2°C) fica no J75 do lado esquerdo · ← role para ver completo →
     </div>
 
     <!-- Cabeçalho das colunas -->
     <div class="bt-hdr-row">
+      <div class="bt-hdr" style="font-size:8px">RD.32</div><div class="bt-hdr-sp"></div>
       <div class="bt-hdr">OITAVAS</div><div class="bt-hdr-sp"></div>
       <div class="bt-hdr">QUARTAS</div><div class="bt-hdr-sp"></div>
-      <div class="bt-hdr">SEMI</div><div class="bt-hdr-sp"></div>
-      <div class="bt-hdr" style="font-size:8px"></div><div class="bt-hdr-sp"></div>
+      <div class="bt-hdr" style="font-size:8px">SEMI</div><div class="bt-hdr-sp"></div>
       <div class="bt-hdr" style="width:60px;color:var(--ouro)">FINAL</div>
-      <div class="bt-hdr-sp"></div><div class="bt-hdr" style="font-size:8px"></div>
-      <div class="bt-hdr-sp"></div><div class="bt-hdr">SEMI</div>
+      <div class="bt-hdr-sp"></div><div class="bt-hdr" style="font-size:8px">SEMI</div>
       <div class="bt-hdr-sp"></div><div class="bt-hdr">QUARTAS</div>
       <div class="bt-hdr-sp"></div><div class="bt-hdr">OITAVAS</div>
+      <div class="bt-hdr-sp"></div><div class="bt-hdr" style="font-size:8px">RD.32</div>
     </div>
 
     <!-- Bracket tree -->
     <div class="bt-outer"><div class="bt">
-      <!-- LEFT: A-H -->
       <div class="bt-half">
         ${lR32}${sp}${lR16}${sp}${lQF}${sp}${lSF}${sp}
       </div>
-      <!-- TROFÉU -->
       <div class="bt-fc">
         <span class="bt-fi">🏆</span>
         <span class="bt-fl">FINAL</span>
         <span class="bt-fd">19 Jul<br>MetLife</span>
       </div>
-      <!-- RIGHT: I-L + 3ºs (row-reverse) -->
       <div class="bt-half bt-half-r">
         ${rR32}${sp}${rR16}${sp}${rQF}${sp}${rSF}${sp}
       </div>
     </div></div>
 
-    <!-- Legenda datas -->
+    <!-- Legenda -->
     <div style="display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 14px;font-size:10px;color:var(--cinza);border-top:1px solid var(--cinza2)">
-      <span>⚽ Oitavas: 27 Jun–3 Jul</span>
-      <span>⚽ Quartas: 4–7 Jul</span>
+      <span>⚽ Rodada 32: 27 Jun–3 Jul</span>
+      <span>⚽ Oitavas: 4–7 Jul</span>
+      <span>⚽ Quartas: 10–11 Jul</span>
       <span>⚽ Semi: 14–15 Jul</span>
       <span>🏆 Final: 19 Jul 2026 · MetLife Stadium</span>
       <span style="margin-left:auto"><span style="border:1px solid var(--verde);padding:1px 5px;border-radius:3px;color:#4ade80">verde</span> = Brasil</span>
-      <span><span style="border:1px dashed var(--cinza2);padding:1px 5px;border-radius:3px">pontilhado</span> = 3ºs colocados</span>
+      <span><span style="border:1px dashed var(--cinza2);padding:1px 5px;border-radius:3px">pontilhado</span> = 3° colocado</span>
     </div>
   </div>`;
 }
