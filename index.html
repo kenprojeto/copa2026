@@ -1382,12 +1382,9 @@ async function boot(manual=false) {
   }
   setBadge('load','⟳ Buscando…');
 
-  /* Busca paralela: standings + scoreboard(hoje) + scoreboard(intervalo amplo) */
-  const TODAY = new Date();
-  const d6 = new Date(TODAY); d6.setDate(TODAY.getDate()-6);
-  const d30= new Date(TODAY); d30.setDate(TODAY.getDate()+30);
-  const fmt = d=>d.toISOString().slice(0,10).replace(/-/g,'');
-  const rangeQS = `dates=${fmt(d6)}-${fmt(d30)}&limit=200`;
+  /* Busca paralela: standings + scoreboard(hoje) + scoreboard(Copa completa) */
+  // Datas fixas da Copa 2026: 12 Jun → 19 Jul (104 jogos, limit=200 cobre tudo)
+  const rangeQS = `dates=20260611-20260720&limit=200`;
 
   const [stR, sbTR, sbAR] = await Promise.allSettled([
     tryEspn('standings'),
@@ -1434,8 +1431,17 @@ async function boot(manual=false) {
   /* Badge */
   if(apiOk) {
     setBadge('ok',`● ESPN Ativo`);
-    document.getElementById('fase-badge').textContent =
-      hasLive ? 'Jogo em Andamento 🔴' : 'Fase de Grupos';
+    const hoje = new Date();
+    const fase =
+      hasLive                        ? 'Jogo em Andamento 🔴' :
+      hoje < new Date('2026-06-27')  ? 'Fase de Grupos' :
+      hoje < new Date('2026-07-04')  ? 'Rodada de 32' :
+      hoje < new Date('2026-07-10')  ? 'Oitavas de Final' :
+      hoje < new Date('2026-07-13')  ? 'Quartas de Final' :
+      hoje < new Date('2026-07-16')  ? 'Semifinais' :
+      hoje < new Date('2026-07-19')  ? '3° Lugar / Final' :
+                                       '🏆 Copa Encerrada';
+    document.getElementById('fase-badge').textContent = fase;
   } else {
     setBadge('off','● Dados Locais');
   }
