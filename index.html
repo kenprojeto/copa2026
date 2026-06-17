@@ -48,6 +48,15 @@
     @keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
     .bdg-fase{font-size:11px;color:var(--cinza);background:rgba(255,255,255,.05);border:1px solid var(--cinza2);padding:4px 10px;border-radius:20px}
 
+    /* ── ABAS ── */
+    .tab-nav{position:sticky;top:0;z-index:200;display:flex;background:var(--bg);border-bottom:2px solid var(--cinza2);padding:0 8px;gap:0}
+    .tab-btn{flex:1;padding:11px 4px 9px;background:none;border:none;border-bottom:3px solid transparent;color:var(--cinza);font-family:'Bebas Neue',display;font-size:13px;letter-spacing:1.2px;cursor:pointer;transition:color .18s,border-color .18s;margin-bottom:-2px;white-space:nowrap}
+    .tab-btn.active{color:var(--amarelo);border-bottom-color:var(--amarelo)}
+    .tab-btn:not(.active):hover{color:var(--branco)}
+    .tab-btn .tbdot{display:inline-block;width:5px;height:5px;background:var(--vermelho);border-radius:50%;vertical-align:middle;margin-left:3px;margin-bottom:2px;animation:pdot 1.5s ease-in-out infinite}
+    .tab-page{display:none}
+    .tab-page.active{display:block}
+
     /* ── LAYOUT ── */
     .wrap{max-width:980px;margin:0 auto;padding:0 12px}
     .sec{padding:18px 0 8px}
@@ -325,54 +334,86 @@
   </div>
 </header>
 
-<!-- ═══ ⚡ AO VIVO & PRÓXIMOS ═══ -->
-<div class="av-wrap">
-  <div class="av-hdr">
-    <div class="av-title"><span style="color:var(--vermelho)">⚡</span> Ao Vivo &amp; Próximos</div>
-    <span class="av-meta" id="av-timer">↻ atualizando…</span>
+<!-- ═══ NAVEGAÇÃO POR ABAS ═══ -->
+<nav class="tab-nav" id="tab-nav">
+  <button class="tab-btn active" data-tab="inicio"  onclick="showTab('inicio')">🏠 Início</button>
+  <button class="tab-btn"        data-tab="grupos"  onclick="showTab('grupos')">⚽ Grupos</button>
+  <button class="tab-btn"        data-tab="chave"   onclick="showTab('chave')">🏆 Chave</button>
+  <button class="tab-btn"        data-tab="ranking" onclick="showTab('ranking')">📊 Ranking</button>
+</nav>
+
+<!-- ════════════════════════════════
+     ABA: INÍCIO
+════════════════════════════════ -->
+<div class="tab-page active" id="page-inicio">
+
+  <!-- ⚡ AO VIVO & PRÓXIMOS -->
+  <div class="av-wrap">
+    <div class="av-hdr">
+      <div class="av-title"><span style="color:var(--vermelho)">⚡</span> Ao Vivo &amp; Próximos</div>
+      <span class="av-meta" id="av-timer">↻ atualizando…</span>
+    </div>
+    <div class="av-scroll" id="av-scroll">
+      <div class="av-vazio"><span class="spin">⟳</span> Buscando jogos…</div>
+    </div>
   </div>
-  <div class="av-scroll" id="av-scroll">
-    <div class="av-vazio"><span class="spin">⟳</span> Buscando jogos…</div>
+
+  <div class="wrap">
+    <div class="sec">
+      <div class="sec-title">🇧🇷 Brasil na Copa 2026</div>
+      <div id="br-card"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-title">📅 Calendário do Brasil</div>
+      <div id="br-agenda"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════
+     ABA: GRUPOS
+════════════════════════════════ -->
+<div class="tab-page" id="page-grupos">
+  <div class="wrap">
+    <div class="sec">
+      <div class="sec-title">🏆 Classificação — Todos os Grupos</div>
+      <div class="leg">
+        <div class="leg-t">📋 Formato Copa 2026 — 48 seleções · 12 grupos</div>
+        <div class="leg-its">
+          <div class="leg-it"><div class="ld" style="background:var(--ouro)"></div><span>1º — avança direto</span></div>
+          <div class="leg-it"><div class="ld" style="background:var(--prata)"></div><span>2º — avança direto</span></div>
+          <div class="leg-it"><div class="ld" style="background:rgba(110,231,183,.7)"></div><span>3º — os 8 melhores entre 12 grupos avançam</span></div>
+          <div class="leg-it"><div class="ld" style="background:var(--verde)"></div><span>🇧🇷 Brasil</span></div>
+        </div>
+      </div>
+      <div class="g-grid" id="g-grid"></div>
+    </div>
   </div>
 </div>
 
-<!-- ═══ CONTEÚDO ═══ -->
-<div class="wrap">
-
-  <div class="sec">
-    <div class="sec-title">🇧🇷 Brasil na Copa 2026</div>
-    <div id="br-card"></div>
-  </div>
-
-  <div class="sec">
-    <div class="sec-title">📅 Calendário do Brasil</div>
-    <div id="br-agenda"></div>
-  </div>
-
-  <div class="sec">
-    <div class="sec-title">🏆 Classificação — Todos os Grupos</div>
-    <div class="leg">
-      <div class="leg-t">📋 Formato Copa 2026 — 48 seleções · 12 grupos</div>
-      <div class="leg-its">
-        <div class="leg-it"><div class="ld" style="background:var(--ouro)"></div><span>1º — avança direto</span></div>
-        <div class="leg-it"><div class="ld" style="background:var(--prata)"></div><span>2º — avança direto</span></div>
-        <div class="leg-it"><div class="ld" style="background:rgba(110,231,183,.7)"></div><span>3º — os 8 melhores entre 12 grupos avançam</span></div>
-        <div class="leg-it"><div class="ld" style="background:var(--verde)"></div><span>🇧🇷 Brasil</span></div>
-      </div>
+<!-- ════════════════════════════════
+     ABA: CHAVEAMENTO
+════════════════════════════════ -->
+<div class="tab-page" id="page-chave">
+  <div class="wrap">
+    <div class="sec">
+      <div class="sec-title">🏆 Chaveamento — Mata-Mata</div>
+      <div id="chaveamento"><div style="text-align:center;color:var(--cinza);padding:20px;font-size:13px"><span class="spin">⟳</span> Montando chaveamento…</div></div>
     </div>
-    <div class="g-grid" id="g-grid"></div>
   </div>
+</div>
 
-  <div class="sec">
-    <div class="sec-title">🏆 Chaveamento — Mata-Mata</div>
-    <div id="chaveamento"><div style="text-align:center;color:var(--cinza);padding:20px;font-size:13px"><span class="spin">⟳</span> Montando chaveamento…</div></div>
+<!-- ════════════════════════════════
+     ABA: RANKING
+════════════════════════════════ -->
+<div class="tab-page" id="page-ranking">
+  <div class="wrap">
+    <div class="sec">
+      <div class="sec-title">📊 Rankings &amp; Estatísticas</div>
+      <div id="rankings"><div style="text-align:center;color:var(--cinza);padding:20px;font-size:13px"><span class="spin">⟳</span> Calculando rankings…</div></div>
+    </div>
   </div>
-
-  <div class="sec">
-    <div class="sec-title">📊 Rankings &amp; Estatísticas</div>
-    <div id="rankings"><div style="text-align:center;color:var(--cinza);padding:20px;font-size:13px"><span class="spin">⟳</span> Calculando rankings…</div></div>
-  </div>
-
 </div>
 
 <footer>
@@ -386,6 +427,26 @@
    COPA DO MUNDO 2026 — DASHBOARD AUTOMÁTICO
    Dados via ESPN Public API — sem necessidade de chave
 ════════════════════════════════════════════════════ */
+
+/* ── NAVEGAÇÃO POR ABAS ── */
+function showTab(id) {
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelector('[data-tab="' + id + '"]').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setLiveDot(hasLive) {
+  const btn = document.querySelector('[data-tab="inicio"]');
+  if (!btn) return;
+  const dot = btn.querySelector('.tbdot');
+  if (hasLive && !dot) {
+    btn.insertAdjacentHTML('beforeend', '<span class="tbdot"></span>');
+  } else if (!hasLive && dot) {
+    dot.remove();
+  }
+}
 
 const CTV = "https://www.youtube.com/@CazéTV";
 
@@ -1460,6 +1521,7 @@ async function boot(manual=false) {
   const delay = hasLive ? 30_000 : jogoEmAndamento ? 45_000 : 4*60_000;
   refreshTimer = setTimeout(()=>boot(false), delay);
   document.getElementById('av-timer').textContent = hasLive ? '↻ ao vivo · 30s' : jogoEmAndamento ? '↻ 45s' : '↻ 4min';
+  setLiveDot(hasLive);
 
   if(manual){
     document.getElementById('btn-att').textContent='🔄 Atualizar';
