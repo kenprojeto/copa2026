@@ -243,6 +243,12 @@
     .bt-gp-dt{font-family:'Bebas Neue',display;font-size:12px;letter-spacing:1px;color:var(--amarelo);text-align:center;padding:4px 0 6px;flex-shrink:0}
     .bt-gp-sep{display:flex;align-items:center;flex-shrink:0}
     .bt-gp-arr{writing-mode:vertical-rl;text-orientation:mixed;font-family:'Bebas Neue',display;font-size:11px;letter-spacing:2px;color:var(--cinza);background:var(--bg2);border:1px solid var(--cinza2);border-radius:6px;padding:8px 4px;text-align:center;white-space:nowrap}
+    /* zoom bar */
+    .bt-zoom-bar{display:flex;align-items:center;gap:6px;padding:7px 14px;border-bottom:1px solid var(--cinza2);background:var(--bg2)}
+    .btz-btn{background:var(--bg-card);border:1px solid var(--cinza2);border-radius:6px;color:var(--branco);font-size:15px;font-weight:700;width:30px;height:30px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s}
+    .btz-btn:hover{background:var(--cinza2)}
+    .btz-btn:active{transform:scale(.88)}
+    #bt-zoom-label{font-size:11px;color:var(--cinza);min-width:38px;text-align:center;font-family:'Bebas Neue',display;font-size:14px;letter-spacing:1px}
     /* round header row above bracket */
     .bt-hdr-row{display:flex;align-items:stretch;width:max-content;margin:0 auto;padding:0 8px}
     .bt-hdr{width:128px;flex-shrink:0;text-align:center;font-size:9px;font-weight:700;color:var(--cinza);letter-spacing:1.5px;padding:8px 0 4px;text-transform:uppercase}
@@ -435,7 +441,41 @@ function showTab(id) {
   document.getElementById('page-' + id).classList.add('active');
   document.querySelector('[data-tab="' + id + '"]').classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (id === 'chave') setTimeout(applyBtZoom, 50);
 }
+
+/* ── ZOOM DO BRACKET ── */
+let btZoom = 1.0;
+const BT_MIN = 0.3, BT_MAX = 1.6;
+
+function applyBtZoom() {
+  const bt = document.querySelector('#bt-outer .bt');
+  const label = document.getElementById('bt-zoom-label');
+  if (bt) bt.style.zoom = btZoom;
+  if (label) label.textContent = Math.round(btZoom * 100) + '%';
+}
+
+function zoomBracket(delta) {
+  btZoom = Math.max(BT_MIN, Math.min(BT_MAX, btZoom + delta));
+  applyBtZoom();
+}
+
+// Pinch-to-zoom com dois dedos no celular
+let _pd0 = null, _pz0 = 1;
+document.addEventListener('touchstart', e => {
+  if (e.touches.length === 2 && e.target.closest('#bt-outer')) {
+    _pd0 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    _pz0 = btZoom;
+  }
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && _pd0 !== null) {
+    const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    btZoom = Math.max(BT_MIN, Math.min(BT_MAX, _pz0 * d / _pd0));
+    applyBtZoom();
+  }
+}, { passive: true });
+document.addEventListener('touchend', () => { _pd0 = null; }, { passive: true });
 
 function setLiveDot(hasLive) {
   const btn = document.querySelector('[data-tab="inicio"]');
@@ -1227,8 +1267,17 @@ function renderChaveamento(grupos, jogos) {
       ← role para ver desde o início · Brasil (2°C) no mata-mata lado esquerdo →
     </div>
 
+    <!-- Controles de zoom -->
+    <div class="bt-zoom-bar">
+      <button class="btz-btn" onclick="zoomBracket(-0.1)" title="Diminuir zoom">−</button>
+      <span id="bt-zoom-label">100%</span>
+      <button class="btz-btn" onclick="zoomBracket(0.1)" title="Aumentar zoom">+</button>
+      <button class="btz-btn" onclick="btZoom=1;applyBtZoom()" title="Resetar zoom" style="font-size:12px">↺</button>
+      <span style="font-size:10px;color:var(--cinza);margin-left:4px">· pinch com 2 dedos no celular</span>
+    </div>
+
     <!-- Bracket tree completo: grupos + mata-mata -->
-    <div class="bt-outer"><div class="bt">
+    <div class="bt-outer" id="bt-outer"><div class="bt">
       ${gpSection}
       <div class="bt-half">
         ${lR32}${sp}${lR16}${sp}${lQF}${sp}${lSF}${sp}
@@ -1486,6 +1535,7 @@ async function boot(manual=false) {
   renderBrCard();
   renderGrupos(grupos);
   renderChaveamento(grupos, todosJogos);
+  applyBtZoom();
   renderRankings(grupos);
   setTs();
 
