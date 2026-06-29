@@ -243,6 +243,30 @@
     .bt-gp-dt{font-family:'Bebas Neue',display;font-size:12px;letter-spacing:1px;color:var(--amarelo);text-align:center;padding:4px 0 6px;flex-shrink:0}
     .bt-gp-sep{display:flex;align-items:center;flex-shrink:0}
     .bt-gp-arr{writing-mode:vertical-rl;text-orientation:mixed;font-family:'Bebas Neue',display;font-size:11px;letter-spacing:2px;color:var(--cinza);background:var(--bg2);border:1px solid var(--cinza2);border-radius:6px;padding:8px 4px;text-align:center;white-space:nowrap}
+    /* ── GRUPO TILES (GE style acima do bracket) ── */
+    .bt-grp-tiles{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 6px;border-bottom:1px solid var(--cinza2)}
+    .bt-gt{background:var(--bg2);border:1px solid var(--cinza2);border-radius:8px;padding:5px 8px;min-width:90px;flex:1}
+    .bt-gt-lbl{font-family:'Bebas Neue',display;font-size:10px;letter-spacing:1.5px;color:var(--cinza);margin-bottom:3px}
+    .bt-gt-flags{display:flex;gap:2px;flex-wrap:wrap}
+    .bt-gt-f{font-size:14px;line-height:1}
+    .bt-gt.isBr{border-color:var(--verde)}
+    .bt-gt.isBr .bt-gt-lbl{color:var(--verde)}
+    /* match card no novo estilo - menor e mais limpo */
+    .bm2{flex:1;margin:2px 0;background:var(--bg-card);border:1px solid var(--cinza2);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;justify-content:center;position:relative;min-height:42px}
+    .bm2.bm-br{border-color:var(--verde);box-shadow:0 0 8px rgba(0,156,59,.15)}
+    .bm2.bm-3{border-style:dashed}
+    .bm2.bm-td{opacity:.28;background:var(--bg2)}
+    .bt3{display:flex;align-items:center;gap:3px;padding:3px 5px}
+    .bt3+.bt3{border-top:1px solid rgba(48,54,61,.4)}
+    .bt3.tb{background:rgba(0,156,59,.1)}.bt3.tb .bnm3{color:var(--verde)}
+    .be3{font-size:11px;flex-shrink:0}
+    .bnm3{flex:1;font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .bgrp3{font-family:'Bebas Neue',display;font-size:9px;color:var(--cinza);background:rgba(139,148,158,.12);border-radius:2px;padding:0 2px;flex-shrink:0;min-width:12px;text-align:center}
+    /* col mais estreita no novo estilo */
+    .bt-col2{display:flex;flex-direction:column;width:106px;flex-shrink:0}
+    .bt-col2-sf{display:flex;flex-direction:column;width:90px;flex-shrink:0}
+    .bsf2{flex:0 0 auto;background:var(--bg-card);border:1px solid var(--cinza2);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;min-height:42px;margin:2px 0;opacity:.3}
+    .bt-sp2{width:14px;flex-shrink:0}
     /* zoom bar */
     .bt-zoom-bar{display:flex;align-items:center;gap:6px;padding:7px 14px;border-bottom:1px solid var(--cinza2);background:var(--bg2)}
     .btz-btn{background:var(--bg-card);border:1px solid var(--cinza2);border-radius:6px;color:var(--branco);font-size:15px;font-weight:700;width:30px;height:30px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s}
@@ -307,6 +331,24 @@
     .stile-v{font-family:'Bebas Neue',display;font-size:28px;color:var(--amarelo);line-height:1}
     .stile-l{font-size:9px;color:var(--cinza);text-transform:uppercase;letter-spacing:.8px;margin-top:3px}
     .stile-s{font-size:11px;font-weight:600;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--branco)}
+
+    /* ── BRACKET HEADER ROW ── */
+    .bt-hdr-row{display:flex;align-items:center;padding:4px 14px;overflow-x:auto}
+    .bt-hdr{font-family:'Bebas Neue',display;font-size:8px;letter-spacing:1px;color:var(--cinza);text-align:center;flex-shrink:0}
+    .bt-hdr-sp{flex-shrink:0}
+    /* Final center */
+    .bt-fc{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;width:60px;gap:2px}
+    .bt-fi{font-size:22px}
+    .bt-fl{font-family:'Bebas Neue',display;font-size:11px;color:var(--ouro);letter-spacing:1.5px}
+    .bt-fd{font-size:8px;color:var(--cinza);text-align:center;line-height:1.3}
+    /* bm-td placeholder */
+    .bm-td .bd{display:flex;align-items:center;justify-content:center;height:100%;min-height:42px}
+    .bsf2{flex:1;max-height:none}
+    /* ag-live highlight */
+    .ag-live .ag-data{color:var(--vermelho)}
+    .ag-live .ag-conf{color:var(--branco)}
+    /* bt-col-gpd from old bracket — keep for compat but unused */
+    .bt-gp-dt{font-size:8px;color:var(--cinza);text-align:center;padding:2px;letter-spacing:.5px}
   </style>
 </head>
 <body>
@@ -916,9 +958,13 @@ function renderAoVivo(jogos, todos) {
 /* ── BRASIL CARD ── */
 let brStats = {pts:1,j:1,v:0,e:1,d:0,gp:1,gc:1,sg:0,pos:2,grp:'C'};
 
-function renderBrCard() {
+function renderBrCard(jogos) {
   const b = brStats;
-  const prox = JOGOS_BR.filter(j=>j.status!=='encerrado');
+  // Próximos e ao vivo da API; fallback hardcoded
+  const apiProx = (jogos||[]).filter(j=>j.isBr && (j.status==='prox'||j.status==='live'))
+    .sort((a,b)=>(a.dateObj||0)-(b.dateObj||0));
+  const prox = apiProx.length ? apiProx : JOGOS_BR.filter(j=>j.status!=='encerrado');
+  const fromApi = apiProx.length > 0;
   document.getElementById('br-card').innerHTML=`
     <div class="br-card">
       <div class="br-hdr">
@@ -934,14 +980,24 @@ function renderBrCard() {
         <div class="stat"><div class="stat-v">${b.gp}–${b.gc}</div><div class="stat-l">Gols</div></div>
         <div class="stat"><div class="stat-v" style="color:${b.sg>0?'var(--verde)':b.sg<0?'#f87171':'var(--amarelo)'}">${b.sg>0?'+':''}${b.sg}</div><div class="stat-l">Saldo</div></div>
       </div>
-      ${prox.length?`<div class="br-prox-t">▶ PRÓXIMOS JOGOS DO BRASIL</div>${prox.map(j=>`
-        <div class="br-jogo"><div class="br-ji">
-          <div class="br-jc">${j.m} <span style="color:var(--cinza)">vs</span> ${j.v}</div>
-          <div class="br-jm">📅 ${j.data}${j.hora?' · '+j.hora+'h (Brasília)':''} · ${j.cidade} · ${j.est}</div>
-        </div>
-        <a href="${CTV}" target="_blank" rel="noopener" class="btn" style="background:var(--laranja);color:#fff">📺 Assistir</a>
-        </div>`).join('')}`
-      :'<p style="color:var(--cinza);font-size:13px;padding:8px 0">Aguardando 2ª rodada 🇧🇷</p>'}
+      ${prox.length?`<div class="br-prox-t">▶ PRÓXIMOS JOGOS DO BRASIL</div>${prox.map(j=>{
+        if(fromApi){
+          const op=j.mn==='Brasil'?j.vn:j.mn; const opF=j.mn==='Brasil'?fl(j.vn):fl(j.mn);
+          const isLive=j.status==='live';
+          return `<div class="br-jogo"><div class="br-ji">
+            <div class="br-jc">🇧🇷 Brasil <span style="color:var(--cinza)">vs</span> ${opF} ${op}${isLive?` <span style="color:var(--vermelho);font-size:11px">● AO VIVO ${j.gE}–${j.gF}</span>`:''}</div>
+            <div class="br-jm">📅 ${j.dt} · ${j.hr}h (Brasília) · ${j.venue||''}</div>
+          </div>
+          <a href="${CTV}" target="_blank" rel="noopener" class="btn" style="background:var(--laranja);color:#fff">📺 Assistir</a></div>`;
+        } else {
+          return `<div class="br-jogo"><div class="br-ji">
+            <div class="br-jc">${j.m} <span style="color:var(--cinza)">vs</span> ${j.v}</div>
+            <div class="br-jm">📅 ${j.data}${j.hora?' · '+j.hora+'h (Brasília)':''} · ${j.cidade} · ${j.est}</div>
+          </div>
+          <a href="${CTV}" target="_blank" rel="noopener" class="btn" style="background:var(--laranja);color:#fff">📺 Assistir</a></div>`;
+        }
+      }).join('')}`
+      :'<p style="color:var(--verde);font-size:13px;padding:8px 0">🏆 Brasil avançou! Aguardando próxima fase.</p>'}
     </div>`;
 }
 
@@ -959,28 +1015,54 @@ function updateBrStats(grupos) {
 }
 
 /* ── AGENDA BRASIL ── */
-function renderAgenda() {
+function renderAgenda(jogos) {
   const MES=['','JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-  document.getElementById('br-agenda').innerHTML=`
-    <div class="agenda">
-      ${JOGOS_BR.map(j=>{
-        const [d,m]=j.data.split('/');
-        const enc=j.status==='encerrado';
-        return `<div class="ag-item ${enc?'enc':''}">
-          <div class="ag-data"><div class="ag-dia">${d}</div><div class="ag-mes">${MES[parseInt(m)]}</div></div>
-          <div class="ag-bar ${j.status}"></div>
-          <div class="ag-info">
-            <div class="ag-conf">${j.m} <span style="color:var(--cinza);font-weight:400">vs</span> ${j.v}</div>
-            <div class="ag-meta">${j.r} · ${j.cidade} · ${j.est}</div>
-          </div>
-          <div class="ag-right">
-            ${enc
-              ? `<div class="ag-placar">${j.placar||'1 – 1'}</div><div style="font-size:10px;color:var(--cinza)">Encerrado</div>`
-              : `<div class="ag-hora">${j.hora}h</div><a href="${CTV}" target="_blank" rel="noopener" class="btn-lj" style="display:inline-block;margin-top:4px">📺 Ao Vivo</a>`}
-          </div>
-        </div>`;
-      }).join('')}
+  const el = document.getElementById('br-agenda');
+
+  // Jogos do Brasil da API (todos: enc + live + prox)
+  const apiBr = (jogos||[]).filter(j=>j.isBr).sort((a,b)=>(a.dateObj||0)-(b.dateObj||0));
+
+  if (apiBr.length) {
+    el.innerHTML=`<div class="agenda">${apiBr.map(j=>{
+      const [d,m]=(j.dt||'--').split('/');
+      const enc=j.status==='enc', live=j.status==='live';
+      const op=j.mn==='Brasil'?j.vn:j.mn; const opF=j.mn==='Brasil'?fl(j.vn):fl(j.mn);
+      return `<div class="ag-item ${enc?'enc':''}${live?' ag-live':''}">
+        <div class="ag-data"><div class="ag-dia">${d||'--'}</div><div class="ag-mes">${MES[parseInt(m)]||'---'}</div></div>
+        <div class="ag-bar ${enc?'encerrado':live?'live':'proximo'}"></div>
+        <div class="ag-info">
+          <div class="ag-conf">🇧🇷 Brasil <span style="color:var(--cinza);font-weight:400">vs</span> ${opF} ${op}</div>
+          <div class="ag-meta">${j.grp?'Grp '+j.grp+' · ':''}${j.venue||''}</div>
+        </div>
+        <div class="ag-right">
+          ${enc
+            ?`<div class="ag-placar">${j.gE} – ${j.gF}</div><div style="font-size:10px;color:var(--cinza)">Encerrado</div>`
+            :live
+            ?`<div class="ag-placar" style="color:var(--vermelho)">${j.gE} – ${j.gF}</div><div style="font-size:10px;color:var(--vermelho)">● AO VIVO</div>`
+            :`<div class="ag-hora">${j.hr}h</div><a href="${CTV}" target="_blank" rel="noopener" class="btn-lj" style="display:inline-block;margin-top:4px">📺 Ao Vivo</a>`}
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+    return;
+  }
+
+  // Fallback hardcoded
+  el.innerHTML=`<div class="agenda">${JOGOS_BR.map(j=>{
+    const [d,m]=j.data.split('/');
+    const enc=j.status==='encerrado';
+    return `<div class="ag-item ${enc?'enc':''}">
+      <div class="ag-data"><div class="ag-dia">${d}</div><div class="ag-mes">${MES[parseInt(m)]}</div></div>
+      <div class="ag-bar ${j.status}"></div>
+      <div class="ag-info">
+        <div class="ag-conf">${j.m} <span style="color:var(--cinza);font-weight:400">vs</span> ${j.v}</div>
+        <div class="ag-meta">${j.r} · ${j.cidade} · ${j.est}</div>
+      </div>
+      <div class="ag-right">
+        ${enc?`<div class="ag-placar">${j.placar||'1 – 1'}</div><div style="font-size:10px;color:var(--cinza)">Encerrado</div>`
+            :`<div class="ag-hora">${j.hora}h</div><a href="${CTV}" target="_blank" rel="noopener" class="btn-lj" style="display:inline-block;margin-top:4px">📺 Ao Vivo</a>`}
+      </div>
     </div>`;
+  }).join('')}</div>`;
 }
 
 /* ── GRUPOS ── */
@@ -1088,7 +1170,6 @@ function renderChaveamento(grupos, jogos) {
   const byGrp = {};
   grupos.forEach(g => byGrp[g.id] = g);
 
-  // Melhor 3º de um conjunto específico de grupos (para slots de 3ºs colocados oficiais)
   function best3(grpIds) {
     return grpIds.flatMap(id => {
       const g = byGrp[id];
@@ -1102,185 +1183,137 @@ function renderChaveamento(grupos, jogos) {
     })[0] || null;
   }
 
-  // Time por posição fixa: '1A', '2C', '1F', etc.
   function gt(pos) {
     const g = byGrp[pos.slice(1)];
     return g ? sortTimes(g.times)[parseInt(pos[0])-1]||null : null;
   }
 
-  function row(t, label, grp) {
+  function row2(t, label, grp) {
     const b = t?.brasil;
-    return `<div class="bt2${b?' tb':''}">
-      ${grp?`<span class="bgrp">${grp}</span>`:''}
-      <span class="be">${t?.emoji||'🏴'}</span>
-      <span class="bnm">${t?.nome||label}</span>
-      ${t?.j>0?`<span class="bp">${t.pts}</span>`:''}
+    return `<div class="bt3${b?' tb':''}">
+      ${grp?`<span class="bgrp3">${grp}</span>`:'<span class="bgrp3" style="opacity:0">·</span>'}
+      <span class="be3">${t?.emoji||'🏴'}</span>
+      <span class="bnm3">${t?.nome||label}</span>
     </div>`;
   }
 
-  // Match card: dois times por posição fixa
-  function mc(posA, posB) {
+  function mc2(posA, posB) {
     const tA=gt(posA), tB=gt(posB);
     const br = tA?.brasil||tB?.brasil;
-    return `<div class="bm${br?' bm-br':''}">
-      ${row(tA,posA,posA.slice(1))}${row(tB,posB,posB.slice(1))}
+    return `<div class="bm2${br?' bm-br':''}">
+      ${row2(tA,posA,posA.slice(1))}${row2(tB,posB,posB.slice(1))}
     </div>`;
   }
 
-  // Match card: um lado é o melhor 3º de grupos elegíveis (slot oficial FIFA)
-  function mc3(posFixed, grpIds) {
+  function mc3b(posFixed, grpIds) {
     const tFixed = gt(posFixed);
     const t3 = best3(grpIds);
     const br = tFixed?.brasil || t3?.brasil;
-    const lbl = `3° (${grpIds.join('/')})`;
-    return `<div class="bm${br?' bm-br':''} bm-3">
-      ${row(tFixed,posFixed,posFixed.slice(1))}${row(t3,lbl,t3?.grpId||'3°')}
+    const lbl = `3°`;
+    return `<div class="bm2${br?' bm-br':''} bm-3">
+      ${row2(tFixed,posFixed,posFixed.slice(1))}${row2(t3,lbl,t3?.grpId||'3°')}
     </div>`;
   }
 
-  // Slot TBD (rodadas seguintes)
-  function td(label) {
-    return `<div class="bm bm-td"><div class="bd"><span class="bp" style="font-size:9px;letter-spacing:1px">${label}</span><span style="font-size:9px;color:var(--cinza)">A definir</span></div></div>`;
+  function td2(label) {
+    return `<div class="bm2 bm-td"><div class="bd"><span style="font-size:8px;letter-spacing:.8px;color:var(--cinza)">${label}</span></div></div>`;
   }
 
-  function sf() {
-    return `<div class="bsf bm-td"><div class="bd"><span class="bp" style="font-size:9px;letter-spacing:1px">SEMI</span><span style="font-size:9px;color:var(--cinza)">A definir</span></div></div>`;
+  function sf2() {
+    return `<div class="bsf2"><div class="bd"><span style="font-size:8px;color:var(--cinza)">SEMI</span></div></div>`;
   }
 
-  // Wrapper de par (conector vertical CSS via ::after)
-  function pair(a, b) { return `<div class="bt-pair">${a}${b}</div>`; }
+  function pair2(a, b) { return `<div class="bt-pair">${a}${b}</div>`; }
 
-  // ─── Mensagem Brasil ───
-  // Brasil (2°C): joga M75 → 1F vs 2C
-  // Brasil (1°C): joga M76 → 1C vs 2F
+  // Brasil msg
   const br1C = gt('1C'), br2C = gt('2C');
   let brMsg = '🇧🇷 Posição do Brasil ainda pode mudar';
   if (br1C?.brasil) {
     const op = gt('2F');
-    brMsg = `🇧🇷 Brasil (1°C) na Rodada de 32: J76 vs <strong style="color:var(--branco)">${op?.nome||'2° Grupo F'}</strong>`;
+    brMsg = `🇧🇷 Brasil (1°C) → vs <strong style="color:var(--branco)">${op?.nome||'2°F'}</strong>`;
   } else if (br2C?.brasil) {
     const op = gt('1F');
-    brMsg = `🇧🇷 Brasil (2°C) na Rodada de 32: J75 vs <strong style="color:var(--branco)">${op?.nome||'1° Grupo F'}</strong>`;
+    brMsg = `🇧🇷 Brasil (2°C) → vs <strong style="color:var(--branco)">${op?.nome||'1°F'}</strong>`;
   }
 
-  const sp = '<div class="bt-sp"></div>';
+  const sp2 = '<div class="bt-sp2"></div>';
 
-  // ═══════════════════════════════════════════════════
-  // CHAVEAMENTO OFICIAL FIFA 2026 (verificado Wikipedia)
-  // Fonte: https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_knockout_stage
-  //
-  // LADO ESQUERDO → SF101:
-  //   Par 1: M74(1E vs 3°A/B/C/D/F) + M77(1I vs 3°C/D/F/G/H) → M89 → QF97
-  //   Par 2: M73(2A vs 2B) + M75(1F vs 2C*Brasil) → M90 → QF97
-  //   Par 3: M83(2K vs 2L) + M84(1H vs 2J) → M93 → QF98
-  //   Par 4: M81(1D*EUA vs 3°B/E/F/I/J) + M82(1G vs 3°A/E/H/I/J) → M94 → QF98
-  //
-  // LADO DIREITO → SF102:
-  //   Par 1: M76(1C*Brasil vs 2F) + M78(2E vs 2I) → M91 → QF99
-  //   Par 2: M79(1A vs 3°C/E/F/H/I) + M80(1L vs 3°E/H/I/J/K) → M92 → QF99
-  //   Par 3: M86(1J vs 2H) + M88(2D vs 2G) → M95 → QF100
-  //   Par 4: M85(1B vs 3°E/F/G/I/J) + M87(1K vs 3°D/E/I/J/L) → M96 → QF100
-  // ═══════════════════════════════════════════════════
+  // ─── TILES DOS GRUPOS ───
+  const grpOrder = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+  const grpTiles = grpOrder.map(id => {
+    const g = byGrp[id];
+    const isBr = g?.times?.some(t=>t.brasil);
+    const flags = g ? sortTimes(g.times).map(t=>`<span class="bt-gt-f" title="${t.nome}">${t.emoji}</span>`).join('') : '····';
+    return `<div class="bt-gt${isBr?' isBr':''}"><div class="bt-gt-lbl">GRP ${id}</div><div class="bt-gt-flags">${flags}</div></div>`;
+  }).join('');
 
-  const lR32 = `<div class="bt-col">
-    ${pair(mc3('1E',['A','B','C','D','F']), mc3('1I',['C','D','F','G','H']))}
-    ${pair(mc('2A','2B'),               mc('1F','2C'))}
-    ${pair(mc('2K','2L'),               mc('1H','2J'))}
-    ${pair(mc3('1D',['B','E','F','I','J']), mc3('1G',['A','E','H','I','J']))}
+  // ─── CHAVEAMENTO OFICIAL FIFA 2026 ───
+  const lR32 = `<div class="bt-col2">
+    ${pair2(mc3b('1E',['A','B','C','D','F']), mc3b('1I',['C','D','F','G','H']))}
+    ${pair2(mc2('2A','2B'),                   mc2('1F','2C'))}
+    ${pair2(mc2('2K','2L'),                   mc2('1H','2J'))}
+    ${pair2(mc3b('1D',['B','E','F','I','J']), mc3b('1G',['A','E','H','I','J']))}
   </div>`;
-
-  const lR16 = `<div class="bt-col">
-    ${pair(td('M89'),td('M90'))}
-    ${pair(td('M93'),td('M94'))}
+  const lR16 = `<div class="bt-col2">
+    ${pair2(td2('M89'),td2('M90'))}
+    ${pair2(td2('M93'),td2('M94'))}
   </div>`;
-
-  const lQF = `<div class="bt-col">
-    ${pair(td('QF · M97'),td('QF · M98'))}
+  const lQF = `<div class="bt-col2">
+    ${pair2(td2('QF97'),td2('QF98'))}
   </div>`;
+  const lSF = `<div class="bt-col2-sf">${sf2()}</div>`;
 
-  const lSF = `<div class="bt-col bt-col-sf">${sf()}</div>`;
-
-  const rR32 = `<div class="bt-col">
-    ${pair(mc('1C','2F'),               mc('2E','2I'))}
-    ${pair(mc3('1A',['C','E','F','H','I']), mc3('1L',['E','H','I','J','K']))}
-    ${pair(mc('1J','2H'),               mc('2D','2G'))}
-    ${pair(mc3('1B',['E','F','G','I','J']), mc3('1K',['D','E','I','J','L']))}
+  const rR32 = `<div class="bt-col2">
+    ${pair2(mc2('1C','2F'),                   mc2('2E','2I'))}
+    ${pair2(mc3b('1A',['C','E','F','H','I']), mc3b('1L',['E','H','I','J','K']))}
+    ${pair2(mc2('1J','2H'),                   mc2('2D','2G'))}
+    ${pair2(mc3b('1B',['E','F','G','I','J']), mc3b('1K',['D','E','I','J','L']))}
   </div>`;
-
-  const rR16 = `<div class="bt-col">
-    ${pair(td('M91'),td('M92'))}
-    ${pair(td('M95'),td('M96'))}
+  const rR16 = `<div class="bt-col2">
+    ${pair2(td2('M91'),td2('M92'))}
+    ${pair2(td2('M95'),td2('M96'))}
   </div>`;
-
-  const rQF = `<div class="bt-col">
-    ${pair(td('QF · M99'),td('QF · M100'))}
+  const rQF = `<div class="bt-col2">
+    ${pair2(td2('QF99'),td2('QF100'))}
   </div>`;
-
-  const rSF = `<div class="bt-col bt-col-sf">${sf()}</div>`;
-
-  // ─── COLUNAS DE JOGOS PASSADOS (integradas ao bracket) ───
-  const encerrados = (jogos||[])
-    .filter(j => j.status === 'enc')
-    .sort((a,b) => (a.dateObj||0) - (b.dateObj||0));
-
-  const byDate = {};
-  encerrados.forEach(j => {
-    const key = j.dt || '—';
-    if (!byDate[key]) byDate[key] = [];
-    byDate[key].push(j);
-  });
-
-  // Colunas de dias dentro do bracket
-  const dayColsHTML = Object.entries(byDate).map(([dt, gs]) => `
-    <div class="bt-col bt-col-gpd">
-      <div class="bt-gp-dt">${dt}</div>
-      ${gs.map(g => `
-        <div class="bm${g.isBr?' bm-br':''}" style="flex:0 0 auto;max-height:none;margin:2px 0">
-          <div class="bt2">
-            <span class="bgrp">${g.grp}</span>
-            <span class="be">${fl(g.mn)}</span>
-            <span class="bnm">${g.mn}</span>
-            <span class="bp">${g.gE}</span>
-          </div>
-          <div class="bt2">
-            <span class="bgrp"></span>
-            <span class="be">${fl(g.vn)}</span>
-            <span class="bnm">${g.vn}</span>
-            <span class="bp">${g.gF}</span>
-          </div>
-        </div>`).join('')}
-    </div>`).join(sp);
-
-  const gpSection = dayColsHTML ? `
-    ${dayColsHTML}
-    <div class="bt-gp-sep">${sp}<div class="bt-gp-arr">MATA-<br>MATA<br>▶</div>${sp}</div>
-  ` : '';
+  const rSF = `<div class="bt-col2-sf">${sf2()}</div>`;
 
   el.innerHTML = `
   <div class="rnk-card">
-    <div class="rnk-hdr">🏆 Copa 2026 — Fase de Grupos → Mata-Mata</div>
+    <div class="rnk-hdr">🏆 Copa 2026 — Caminho até a Final</div>
     <div class="bt-note">
-      ⚡ Baseado na classificação <strong style="color:var(--amarelo)">atual</strong> — atualiza automaticamente
-      &nbsp;·&nbsp; ${brMsg}
+      ⚡ Atualiza automaticamente &nbsp;·&nbsp; ${brMsg}
     </div>
-    <div class="bt-note" style="color:var(--cinza);font-size:10px;padding-top:0">
-      ← role para ver desde o início · Brasil (2°C) no mata-mata lado esquerdo →
-    </div>
+
+    <!-- Tiles dos 12 grupos -->
+    <div class="bt-grp-tiles">${grpTiles}</div>
 
     <!-- Controles de zoom -->
     <div class="bt-zoom-bar">
-      <button class="btz-btn" onclick="zoomBracket(-0.1)" title="Diminuir zoom">−</button>
+      <button class="btz-btn" onclick="zoomBracket(-0.1)">−</button>
       <span id="bt-zoom-label">100%</span>
-      <button class="btz-btn" onclick="zoomBracket(0.1)" title="Aumentar zoom">+</button>
-      <button class="btz-btn" onclick="btZoom=1;applyBtZoom()" title="Resetar zoom" style="font-size:12px">↺</button>
-      <span style="font-size:10px;color:var(--cinza);margin-left:4px">· pinch com 2 dedos no celular</span>
+      <button class="btz-btn" onclick="zoomBracket(0.1)">+</button>
+      <button class="btz-btn" onclick="btZoom=1;applyBtZoom()" style="font-size:12px">↺</button>
+      <span style="font-size:10px;color:var(--cinza);margin-left:4px">· pinch 2 dedos no celular</span>
     </div>
 
-    <!-- Bracket tree completo: grupos + mata-mata -->
+    <!-- Rótulos das colunas -->
+    <div class="bt-hdr-row">
+      <div class="bt-hdr" style="width:106px;font-size:7px">RODADA 32</div><div class="bt-hdr-sp" style="width:14px"></div>
+      <div class="bt-hdr" style="width:106px">OITAVAS</div><div class="bt-hdr-sp" style="width:14px"></div>
+      <div class="bt-hdr" style="width:106px">QUARTAS</div><div class="bt-hdr-sp" style="width:14px"></div>
+      <div class="bt-hdr" style="width:90px;font-size:7px">SEMI</div><div class="bt-hdr-sp" style="width:14px"></div>
+      <div class="bt-hdr" style="width:60px;color:var(--ouro)">FINAL</div>
+      <div class="bt-hdr-sp" style="width:14px"></div><div class="bt-hdr" style="width:90px;font-size:7px">SEMI</div>
+      <div class="bt-hdr-sp" style="width:14px"></div><div class="bt-hdr" style="width:106px">QUARTAS</div>
+      <div class="bt-hdr-sp" style="width:14px"></div><div class="bt-hdr" style="width:106px">OITAVAS</div>
+      <div class="bt-hdr-sp" style="width:14px"></div><div class="bt-hdr" style="width:106px;font-size:7px">RODADA 32</div>
+    </div>
+
+    <!-- Bracket -->
     <div class="bt-outer" id="bt-outer"><div class="bt">
-      ${gpSection}
       <div class="bt-half">
-        ${lR32}${sp}${lR16}${sp}${lQF}${sp}${lSF}${sp}
+        ${lR32}${sp2}${lR16}${sp2}${lQF}${sp2}${lSF}${sp2}
       </div>
       <div class="bt-fc">
         <span class="bt-fi">🏆</span>
@@ -1288,23 +1321,23 @@ function renderChaveamento(grupos, jogos) {
         <span class="bt-fd">19 Jul<br>MetLife</span>
       </div>
       <div class="bt-half bt-half-r">
-        ${rR32}${sp}${rR16}${sp}${rQF}${sp}${rSF}${sp}
+        ${rR32}${sp2}${rR16}${sp2}${rQF}${sp2}${rSF}${sp2}
       </div>
     </div></div>
 
     <!-- Legenda -->
-    <div style="display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 14px;font-size:10px;color:var(--cinza);border-top:1px solid var(--cinza2)">
-      <span>⚽ Fase de Grupos: 12–25 Jun</span>
+    <div style="display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 14px;font-size:10px;color:var(--cinza);border-top:1px solid var(--cinza2)">
       <span>⚽ Rodada 32: 27 Jun–3 Jul</span>
       <span>⚽ Oitavas: 4–7 Jul</span>
       <span>⚽ Quartas: 10–11 Jul</span>
       <span>⚽ Semi: 14–15 Jul</span>
-      <span>🏆 Final: 19 Jul</span>
-      <span style="margin-left:auto"><span style="border:1px solid var(--verde);padding:1px 5px;border-radius:3px;color:#4ade80">verde</span> = Brasil</span>
-      <span><span style="border:1px dashed var(--cinza2);padding:1px 5px;border-radius:3px">pontilhado</span> = 3° colocado</span>
+      <span>🏆 Final: 19 Jul 2026 · MetLife</span>
+      <span style="margin-left:auto"><span style="border:1px solid var(--verde);padding:1px 4px;border-radius:3px;color:#4ade80">verde</span> = Brasil</span>
+      <span><span style="border:1px dashed var(--cinza2);padding:1px 4px;border-radius:3px">pontilhado</span> = 3°</span>
     </div>
   </div>`;
 }
+
 
 /* ══════════════════════════════════════════
    RANKINGS & ESTATÍSTICAS
@@ -1532,7 +1565,8 @@ async function boot(manual=false) {
 
   /* Render */
   renderAoVivo(jogosHoje.length ? jogosHoje : todosJogos.filter(j=>j.status!=='enc'), todosJogos);
-  renderBrCard();
+  renderBrCard(todosJogos);
+  renderAgenda(todosJogos);
   renderGrupos(grupos);
   renderChaveamento(grupos, todosJogos);
   applyBtZoom();
@@ -1557,8 +1591,6 @@ async function boot(manual=false) {
     setBadge('off','● Dados Locais');
   }
 
-  /* Agenda — não precisamos re-renderizar a cada boot */
-
   /* Próxima atualização */
   if(refreshTimer) clearTimeout(refreshTimer);
   // Verifica se algum jogo começou nas últimas 2h (pode ainda estar sem status live na ESPN)
@@ -1580,8 +1612,8 @@ async function boot(manual=false) {
 }
 
 /* ── INIT ── */
-renderBrCard();
-renderAgenda();
+renderBrCard([]);
+renderAgenda([]);
 renderGrupos(GF);           // mostra fallback imediatamente
 renderChaveamento(GF, []);  // chaveamento com dados fallback
 renderRankings(GF);         // rankings com dados fallback
