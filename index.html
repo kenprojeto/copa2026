@@ -342,6 +342,8 @@
     .bt-fl{font-family:'Bebas Neue',display;font-size:11px;color:var(--ouro);letter-spacing:1.5px}
     .bt-fd{font-size:8px;color:var(--cinza);text-align:center;line-height:1.3}
     /* bm-td placeholder */
+    .bsc{font-size:8px;color:var(--verde);font-weight:700;margin-left:2px;flex-shrink:0}
+    .tbd .bnm3{color:var(--cinza);font-style:italic}
     .bm-td .bd{display:flex;align-items:center;justify-content:center;height:100%;min-height:42px}
     .bsf2{flex:1;max-height:none}
     /* ag-live highlight */
@@ -754,6 +756,7 @@ function parseSb(data) {
       dateObj:utc,
       isBr:  mn==='Brasil'||vn==='Brasil',
       venue: comp.venue?.fullName||'',
+      homeWon: isEnc ? (home.winner===true ? true : away.winner===true ? false : rawH>rawA ? true : rawA>rawH ? false : null) : null,
     }];
   });
 }
@@ -1170,125 +1173,207 @@ function renderChaveamento(grupos, jogos) {
   const byGrp = {};
   grupos.forEach(g => byGrp[g.id] = g);
 
-  function best3(grpIds) {
-    return grpIds.flatMap(id => {
-      const g = byGrp[id];
-      if (!g) return [];
-      const s = sortTimes(g.times);
-      return s[2] ? [{ ...s[2], grpId: id }] : [];
-    }).sort((a,b) => {
-      if (b.pts !== a.pts) return b.pts - a.pts;
-      if (b.sg  !== a.sg)  return b.sg  - a.sg;
-      return b.gp - a.gp;
-    })[0] || null;
-  }
-
+  /* ── Resolvers de posição ── */
   function gt(pos) {
     const g = byGrp[pos.slice(1)];
-    return g ? sortTimes(g.times)[parseInt(pos[0])-1]||null : null;
+    const arr = g ? sortTimes(g.times) : [];
+    const t = arr[parseInt(pos[0])-1] || null;
+    return t ? { ...t, grpId: pos.slice(1) } : null;
   }
 
-  function row2(t, label, grp) {
-    const b = t?.brasil;
-    return `<div class="bt3${b?' tb':''}">
-      ${grp?`<span class="bgrp3">${grp}</span>`:'<span class="bgrp3" style="opacity:0">·</span>'}
-      <span class="be3">${t?.emoji||'🏴'}</span>
-      <span class="bnm3">${t?.nome||label}</span>
+  function best3(grpIds) {
+    const t = grpIds.flatMap(id => {
+      const g = byGrp[id]; if (!g) return [];
+      const s = sortTimes(g.times);
+      return s[2] ? [{ ...s[2], grpId: id }] : [];
+    }).sort((a,b) => b.pts!==a.pts?b.pts-a.pts : b.sg!==a.sg?b.sg-a.sg : b.gp-a.gp)[0] || null;
+    if (t && !t.grpId) t.grpId = '3°';
+    return t;
+  }
+
+  /* ── Mapa de vencedores de mata-mata (da API ESPN) ── */
+  // Jogos sem grupo (grp==='?') e encerrados são mata-mata
+  const koMap = {}; // "nameA|nameB" (sorted) → { winnerName, score }
+  (jogos||[]).filter(j => j.grp==='?' && j.status==='enc').forEach(j => {
+    const hG = parseInt(j.gE)||0, aG = parseInt(j.gF)||0;
+    let wName = null;
+    if      (j.homeWon===true)  wName = j.mn;
+    else if (j.homeWon===false) wName = j.vn;
+    else if (hG !== aG)         wName = hG>aG ? j.mn : j.vn;
+    if (!wName) return;
+    const key = [j.mn.toLowerCase(), j.vn.toLowerCase()].sort().join('|');
+    koMap[key] = { winnerName: wName, score: `${hG}–${aG}` };
+  });
+
+  function findWinner(tA, tB) {
+    if (!tA || !tB) return null;
+    const key = [tA.nome.toLowerCase(), tB.nome.toLowerCase()].sort().join('|');
+    const res = koMap[key];
+    if (!res) return null;
+    const aWins = res.winnerName.toLowerCase() === tA.nome.toLowerCase();
+    const w = aWins ? { ...tA } : { ...tB };
+    w.score = res.score;
+    w.won = true;
+    return w;
+  }
+
+  /* ── Slot de "a definir" com posição base ── */
+  function tbd(label) {
+    return { nome: label||'A definir', emoji:'🏴', grpId:'', brasil:false, _tbd:true };
+  }
+
+  /* ── Builders de HTML ── */
+  function teamRow(t, isWon) {
+    const e = t?.emoji||'🏴', n = t?.nome||'A definir', g = t?.grpId||'';
+    const isTbd = !t || t._tbd;
+    return `<div class="bt3${isWon?' tb':''}${isTbd?' tbd':''}">
+      <span class="bgrp3">${g}</span>
+      <span class="be3">${e}</span>
+      <span class="bnm3">${n}</span>
+      ${isWon&&t.score?`<span class="bsc">${t.score}</span>`:''}
     </div>`;
   }
 
-  function mc2(posA, posB) {
-    const tA=gt(posA), tB=gt(posB);
+  function matchCard(tA, tB, cls='') {
     const br = tA?.brasil||tB?.brasil;
-    return `<div class="bm2${br?' bm-br':''}">
-      ${row2(tA,posA,posA.slice(1))}${row2(tB,posB,posB.slice(1))}
+    const w  = findWinner(tA, tB);
+    const aW = w && w.nome===tA?.nome, bW = w && w.nome===tB?.nome;
+    return `<div class="bm2${br?' bm-br':''}${cls}">
+      ${teamRow(tA,aW)}${teamRow(tB,bW)}
     </div>`;
   }
 
-  function mc3b(posFixed, grpIds) {
-    const tFixed = gt(posFixed);
-    const t3 = best3(grpIds);
-    const br = tFixed?.brasil || t3?.brasil;
-    const lbl = `3°`;
-    return `<div class="bm2${br?' bm-br':''} bm-3">
-      ${row2(tFixed,posFixed,posFixed.slice(1))}${row2(t3,lbl,t3?.grpId||'3°')}
-    </div>`;
+  function tdCard(lbl) {
+    return `<div class="bm2 bm-td"><div class="bd"><span style="font-size:8px;letter-spacing:.6px;color:var(--cinza)">${lbl}</span></div></div>`;
   }
 
-  function td2(label) {
-    return `<div class="bm2 bm-td"><div class="bd"><span style="font-size:8px;letter-spacing:.8px;color:var(--cinza)">${label}</span></div></div>`;
+  function pair(a,b){ return `<div class="bt-pair">${a}${b}</div>`; }
+
+  /* ── Resolver R32: equipe do grupo ── */
+  function r32T(spec) {
+    if (typeof spec==='string') return gt(spec);
+    if (spec.b3) return best3(spec.b3);
+    return null;
   }
 
-  function sf2() {
-    return `<div class="bsf2"><div class="bd"><span style="font-size:8px;color:var(--cinza)">SEMI</span></div></div>`;
+  /* ── Carta R32 (times do grupo) ── */
+  function r32Card(sA, sB, isThird=false) {
+    return matchCard(r32T(sA), r32T(sB), isThird?' bm-3':'');
   }
 
-  function pair2(a, b) { return `<div class="bt-pair">${a}${b}</div>`; }
+  /* ── Winner de um R32 matchup ── */
+  function r32W(sA, sB) { return findWinner(r32T(sA), r32T(sB)); }
 
-  // Brasil msg
-  const br1C = gt('1C'), br2C = gt('2C');
-  let brMsg = '🇧🇷 Posição do Brasil ainda pode mudar';
-  if (br1C?.brasil) {
-    const op = gt('2F');
-    brMsg = `🇧🇷 Brasil (1°C) → vs <strong style="color:var(--branco)">${op?.nome||'2°F'}</strong>`;
-  } else if (br2C?.brasil) {
-    const op = gt('1F');
-    brMsg = `🇧🇷 Brasil (2°C) → vs <strong style="color:var(--branco)">${op?.nome||'1°F'}</strong>`;
+  /* ── Carta de rodada avançada: mostra vencedores ou TBD ── */
+  function advCard(tA, tB) {
+    const a = tA || null, b = tB || null;
+    if (!a && !b) return tdCard('A definir');
+    return matchCard(a, b);
   }
 
-  const sp2 = '<div class="bt-sp2"></div>';
+  /* ── Compute vencedores de cada fase ── */
+  // R32
+  const wm = {};
+  wm[73]=r32W('1E',{b3:['A','B','C','D','F']});
+  wm[74]=r32W('1I',{b3:['C','D','F','G','H']});
+  wm[75]=r32W('2A','2B');
+  wm[76]=r32W('1F','2C');
+  wm[77]=r32W('2K','2L');
+  wm[78]=r32W('1H','2J');
+  wm[79]=r32W('1D',{b3:['B','E','F','I','J']});
+  wm[80]=r32W('1G',{b3:['A','E','H','I','J']});
+  wm[81]=r32W('1C','2F');
+  wm[82]=r32W('2E','2I');
+  wm[83]=r32W('1A',{b3:['C','E','F','H','I']});
+  wm[84]=r32W('1L',{b3:['E','H','I','J','K']});
+  wm[85]=r32W('1J','2H');
+  wm[86]=r32W('2D','2G');
+  wm[87]=r32W('1B',{b3:['E','F','G','I','J']});
+  wm[88]=r32W('1K',{b3:['D','E','I','J','L']});
+  // R16 (oitavas)
+  wm[89]=findWinner(wm[73],wm[74]);
+  wm[90]=findWinner(wm[75],wm[76]);
+  wm[91]=findWinner(wm[77],wm[78]);
+  wm[92]=findWinner(wm[79],wm[80]);
+  wm[93]=findWinner(wm[81],wm[82]);
+  wm[94]=findWinner(wm[83],wm[84]);
+  wm[95]=findWinner(wm[85],wm[86]);
+  wm[96]=findWinner(wm[87],wm[88]);
+  // Quartas
+  wm.qf97 =findWinner(wm[89],wm[90]);
+  wm.qf98 =findWinner(wm[91],wm[92]);
+  wm.qf99 =findWinner(wm[93],wm[94]);
+  wm.qf100=findWinner(wm[95],wm[96]);
+  // Semis
+  wm.sf1=findWinner(wm.qf97,wm.qf98);
+  wm.sf2=findWinner(wm.qf99,wm.qf100);
+  // Final
+  wm.final=findWinner(wm.sf1,wm.sf2);
 
-  // ─── TILES DOS GRUPOS ───
-  const grpOrder = ['A','B','C','D','E','F','G','H','I','J','K','L'];
-  const grpTiles = grpOrder.map(id => {
-    const g = byGrp[id];
-    const isBr = g?.times?.some(t=>t.brasil);
-    const flags = g ? sortTimes(g.times).map(t=>`<span class="bt-gt-f" title="${t.nome}">${t.emoji}</span>`).join('') : '····';
+  /* ── Brasil msg dinâmica ── */
+  let brMsg = '🇧🇷 Torça pelo Brasil!';
+  const br1C=r32T('1C'), br2C=r32T('2C');
+  if (br1C?.brasil||br2C?.brasil) {
+    const brTeam = br1C?.brasil ? br1C : br2C;
+    const posLbl = br1C?.brasil ? '1°C' : '2°C';
+    const opp = br1C?.brasil ? r32T('2F') : r32T('1F');
+    if (wm[81]?.brasil) {
+      const nextOpp = wm[82] ? `vs <strong style="color:var(--branco)">${wm[82].emoji} ${wm[82].nome}</strong>` : 'aguardando adversário';
+      brMsg = `🇧🇷 Brasil nas Oitavas! ${nextOpp}`;
+    } else {
+      brMsg = `🇧🇷 Brasil (${posLbl}) → vs <strong style="color:var(--branco)">${opp?.emoji||'🏴'} ${opp?.nome||'?'}</strong>`;
+    }
+  }
+
+  /* ── Group tiles ── */
+  const grpOrder=['A','B','C','D','E','F','G','H','I','J','K','L'];
+  const grpTiles=grpOrder.map(id=>{
+    const g=byGrp[id];
+    const isBr=g?.times?.some(t=>t.brasil);
+    const flags=g?sortTimes(g.times).map(t=>`<span class="bt-gt-f" title="${t.nome}">${t.emoji}</span>`).join(''):'····';
     return `<div class="bt-gt${isBr?' isBr':''}"><div class="bt-gt-lbl">GRP ${id}</div><div class="bt-gt-flags">${flags}</div></div>`;
   }).join('');
 
-  // ─── CHAVEAMENTO OFICIAL FIFA 2026 ───
-  const lR32 = `<div class="bt-col2">
-    ${pair2(mc3b('1E',['A','B','C','D','F']), mc3b('1I',['C','D','F','G','H']))}
-    ${pair2(mc2('2A','2B'),                   mc2('1F','2C'))}
-    ${pair2(mc2('2K','2L'),                   mc2('1H','2J'))}
-    ${pair2(mc3b('1D',['B','E','F','I','J']), mc3b('1G',['A','E','H','I','J']))}
-  </div>`;
-  const lR16 = `<div class="bt-col2">
-    ${pair2(td2('M89'),td2('M90'))}
-    ${pair2(td2('M93'),td2('M94'))}
-  </div>`;
-  const lQF = `<div class="bt-col2">
-    ${pair2(td2('QF97'),td2('QF98'))}
-  </div>`;
-  const lSF = `<div class="bt-col2-sf">${sf2()}</div>`;
+  /* ── HTML do chaveamento ── */
+  const sp2='<div class="bt-sp2"></div>';
 
-  const rR32 = `<div class="bt-col2">
-    ${pair2(mc2('1C','2F'),                   mc2('2E','2I'))}
-    ${pair2(mc3b('1A',['C','E','F','H','I']), mc3b('1L',['E','H','I','J','K']))}
-    ${pair2(mc2('1J','2H'),                   mc2('2D','2G'))}
-    ${pair2(mc3b('1B',['E','F','G','I','J']), mc3b('1K',['D','E','I','J','L']))}
+  const lR32=`<div class="bt-col2">
+    ${pair(r32Card('1E',{b3:['A','B','C','D','F']},true), r32Card('1I',{b3:['C','D','F','G','H']},true))}
+    ${pair(r32Card('2A','2B'),   r32Card('1F','2C'))}
+    ${pair(r32Card('2K','2L'),   r32Card('1H','2J'))}
+    ${pair(r32Card('1D',{b3:['B','E','F','I','J']},true), r32Card('1G',{b3:['A','E','H','I','J']},true))}
   </div>`;
-  const rR16 = `<div class="bt-col2">
-    ${pair2(td2('M91'),td2('M92'))}
-    ${pair2(td2('M95'),td2('M96'))}
+  const lR16=`<div class="bt-col2">
+    ${pair(advCard(wm[73],wm[74]), advCard(wm[75],wm[76]))}
+    ${pair(advCard(wm[77],wm[78]), advCard(wm[79],wm[80]))}
   </div>`;
-  const rQF = `<div class="bt-col2">
-    ${pair2(td2('QF99'),td2('QF100'))}
+  const lQF=`<div class="bt-col2">
+    ${pair(advCard(wm[89],wm[90]), advCard(wm[91],wm[92]))}
   </div>`;
-  const rSF = `<div class="bt-col2-sf">${sf2()}</div>`;
+  const lSF=`<div class="bt-col2-sf">${advCard(wm.qf97,wm.qf98)}</div>`;
 
-  el.innerHTML = `
+  const rR32=`<div class="bt-col2">
+    ${pair(r32Card('1C','2F'),   r32Card('2E','2I'))}
+    ${pair(r32Card('1A',{b3:['C','E','F','H','I']},true), r32Card('1L',{b3:['E','H','I','J','K']},true))}
+    ${pair(r32Card('1J','2H'),   r32Card('2D','2G'))}
+    ${pair(r32Card('1B',{b3:['E','F','G','I','J']},true), r32Card('1K',{b3:['D','E','I','J','L']},true))}
+  </div>`;
+  const rR16=`<div class="bt-col2">
+    ${pair(advCard(wm[81],wm[82]), advCard(wm[83],wm[84]))}
+    ${pair(advCard(wm[85],wm[86]), advCard(wm[87],wm[88]))}
+  </div>`;
+  const rQF=`<div class="bt-col2">
+    ${pair(advCard(wm[93],wm[94]), advCard(wm[95],wm[96]))}
+  </div>`;
+  const rSF=`<div class="bt-col2-sf">${advCard(wm.qf99,wm.qf100)}</div>`;
+
+  el.innerHTML=`
   <div class="rnk-card">
     <div class="rnk-hdr">🏆 Copa 2026 — Caminho até a Final</div>
-    <div class="bt-note">
-      ⚡ Atualiza automaticamente &nbsp;·&nbsp; ${brMsg}
-    </div>
+    <div class="bt-note">⚡ Atualiza automaticamente &nbsp;·&nbsp; ${brMsg}</div>
 
-    <!-- Tiles dos 12 grupos -->
     <div class="bt-grp-tiles">${grpTiles}</div>
 
-    <!-- Controles de zoom -->
     <div class="bt-zoom-bar">
       <button class="btz-btn" onclick="zoomBracket(-0.1)">−</button>
       <span id="bt-zoom-label">100%</span>
@@ -1297,7 +1382,6 @@ function renderChaveamento(grupos, jogos) {
       <span style="font-size:10px;color:var(--cinza);margin-left:4px">· pinch 2 dedos no celular</span>
     </div>
 
-    <!-- Rótulos das colunas -->
     <div class="bt-hdr-row">
       <div class="bt-hdr" style="width:106px;font-size:7px">RODADA 32</div><div class="bt-hdr-sp" style="width:14px"></div>
       <div class="bt-hdr" style="width:106px">OITAVAS</div><div class="bt-hdr-sp" style="width:14px"></div>
@@ -1310,14 +1394,13 @@ function renderChaveamento(grupos, jogos) {
       <div class="bt-hdr-sp" style="width:14px"></div><div class="bt-hdr" style="width:106px;font-size:7px">RODADA 32</div>
     </div>
 
-    <!-- Bracket -->
     <div class="bt-outer" id="bt-outer"><div class="bt">
       <div class="bt-half">
         ${lR32}${sp2}${lR16}${sp2}${lQF}${sp2}${lSF}${sp2}
       </div>
       <div class="bt-fc">
-        <span class="bt-fi">🏆</span>
-        <span class="bt-fl">FINAL</span>
+        <span class="bt-fi">${wm.final?wm.final.emoji:'🏆'}</span>
+        <span class="bt-fl">${wm.final?wm.final.nome:'FINAL'}</span>
         <span class="bt-fd">19 Jul<br>MetLife</span>
       </div>
       <div class="bt-half bt-half-r">
@@ -1325,7 +1408,6 @@ function renderChaveamento(grupos, jogos) {
       </div>
     </div></div>
 
-    <!-- Legenda -->
     <div style="display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 14px;font-size:10px;color:var(--cinza);border-top:1px solid var(--cinza2)">
       <span>⚽ Rodada 32: 27 Jun–3 Jul</span>
       <span>⚽ Oitavas: 4–7 Jul</span>
