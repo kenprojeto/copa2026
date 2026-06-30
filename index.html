@@ -542,6 +542,8 @@ const PT = {
   'South Korea':'Coreia do Sul','Korea Republic':'Coreia do Sul',
   'Czech Republic':'Rep. Tcheca','Czechia':'Rep. Tcheca',
   'Italy':'Itália','Switzerland':'Suíça','Canada':'Canadá','Qatar':'Catar',
+  'Bosnia-Herzegovina':'Bósnia-Herzegovina','Bosnia and Herzegovina':'Bósnia-Herzegovina','Bosnia':'Bósnia-Herzegovina',
+  'Türkiye':'Turquia','Turkey':'Turquia',
   'United States':'EUA','USA':'EUA','US':'EUA','Austria':'Áustria',
   'Paraguay':'Paraguai','Australia':'Austrália',
   'Germany':'Alemanha','Curacao':'Curaçao','Curaçao':'Curaçao',
@@ -563,6 +565,7 @@ const FL = {
   'Escócia':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Marrocos':'🇲🇦','Haiti':'🇭🇹','México':'🇲🇽',
   'África do Sul':'🇿🇦','Coreia do Sul':'🇰🇷','Rep. Tcheca':'🇨🇿',
   'Itália':'🇮🇹','Suíça':'🇨🇭','Canadá':'🇨🇦','Catar':'🇶🇦',
+  'Bósnia-Herzegovina':'🇧🇦','Turquia':'🇹🇷',
   'EUA':'🇺🇸','Áustria':'🇦🇹','Paraguai':'🇵🇾','Austrália':'🇦🇺',
   'Alemanha':'🇩🇪','Curaçao':'🇨🇼','Costa do Marfim':'🇨🇮','Equador':'🇪🇨',
   'Holanda':'🇳🇱','Japão':'🇯🇵','Suécia':'🇸🇪','Tunísia':'🇹🇳',
@@ -576,15 +579,15 @@ const FL = {
 /* Qual grupo cada time pertence (fixo durante o torneio) */
 const TG = {
   'México':'A','África do Sul':'A','Coreia do Sul':'A','Rep. Tcheca':'A',
-  'Itália':'B','Suíça':'B','Canadá':'B','Catar':'B',
+  'Bósnia-Herzegovina':'B','Suíça':'B','Canadá':'B','Catar':'B',
   'Escócia':'C','Brasil':'C','Marrocos':'C','Haiti':'C',
-  'EUA':'D','Áustria':'D','Paraguai':'D','Austrália':'D',
+  'EUA':'D','Turquia':'D','Paraguai':'D','Austrália':'D',
   'Alemanha':'E','Curaçao':'E','Costa do Marfim':'E','Equador':'E',
   'Holanda':'F','Japão':'F','Suécia':'F','Tunísia':'F',
   'Bélgica':'G','Egito':'G','Irã':'G','Nova Zelândia':'G',
   'Espanha':'H','Uruguai':'H','Arábia Saudita':'H','Cabo Verde':'H',
   'França':'I','Senegal':'I','Noruega':'I','Iraque':'I',
-  'Argentina':'J','Argélia':'J','Jordânia':'J',
+  'Argentina':'J','Argélia':'J','Áustria':'J','Jordânia':'J',
   'Portugal':'K','Colômbia':'K','Uzbequistão':'K','RD Congo':'K',
   'Inglaterra':'L','Croácia':'L','Gana':'L','Panamá':'L',
 };
@@ -618,22 +621,22 @@ const GF = [
     {emoji:'🇨🇿',nome:'Rep. Tcheca',   j:0,v:0,e:0,d:0,gp:0,gc:0,sg:0, pts:0},
   ],res:[{m:'🇲🇽 México',p:'2 – 0',v:'África do Sul 🇿🇦',dt:'12/06'}],prox:[]},
   {id:'B',times:[
-    {emoji:'🇮🇹',nome:'Itália', j:1,v:1,e:0,d:0,gp:3,gc:1,sg:+2,pts:3},
+    {emoji:'🇧🇦',nome:'Bósnia-Herzegovina',j:1,v:1,e:0,d:0,gp:2,gc:0,sg:+2,pts:3},
     {emoji:'🇨🇭',nome:'Suíça',  j:1,v:1,e:0,d:0,gp:3,gc:1,sg:+2,pts:3},
     {emoji:'🇨🇦',nome:'Canadá', j:1,v:0,e:0,d:1,gp:1,gc:3,sg:-2,pts:0},
     {emoji:'🇶🇦',nome:'Catar',  j:1,v:0,e:0,d:1,gp:1,gc:3,sg:-2,pts:0},
   ],res:[
-    {m:'🇨🇦 Canadá',p:'1 – 3',v:'Itália 🇮🇹',dt:'12/06'},
+    {m:'🇨🇦 Canadá',p:'0 – 2',v:'Bósnia 🇧🇦',  dt:'12/06'},
     {m:'🇶🇦 Catar', p:'1 – 3',v:'Suíça 🇨🇭', dt:'12/06'},
   ],prox:[]},
   {id:'D',times:[
     {emoji:'🇺🇸',nome:'EUA',       j:1,v:1,e:0,d:0,gp:4,gc:1,sg:+3,pts:3},
-    {emoji:'🇦🇹',nome:'Áustria',   j:1,v:1,e:0,d:0,gp:2,gc:0,sg:+2,pts:3},
+    {emoji:'🇹🇷',nome:'Turquia',   j:1,v:1,e:0,d:0,gp:2,gc:0,sg:+2,pts:3},
     {emoji:'🇵🇾',nome:'Paraguai',  j:1,v:0,e:0,d:1,gp:1,gc:4,sg:-3,pts:0},
     {emoji:'🇦🇺',nome:'Austrália', j:1,v:0,e:0,d:1,gp:0,gc:2,sg:-2,pts:0},
   ],res:[
     {m:'🇺🇸 EUA',      p:'4 – 1',v:'Paraguai 🇵🇾', dt:'13/06'},
-    {m:'🇦🇺 Austrália',p:'0 – 2',v:'Áustria 🇦🇹',  dt:'13/06'},
+    {m:'🇦🇺 Austrália',p:'0 – 2',v:'Turquia 🇹🇷',  dt:'13/06'},
   ],prox:[]},
   ...'EFGHIJKL'.split('').map(id => ({id, times:
     (id==='E'?[['🇩🇪','Alemanha'],['🇨🇼','Curaçao'],['🇨🇮','Costa do Marfim'],['🇪🇨','Equador']]:
