@@ -1195,10 +1195,11 @@ function renderChaveamento(grupos, jogos) {
   }
 
   /* ── Mapa de vencedores de mata-mata (da API ESPN) ── */
-  // Jogos sem grupo (grp==='?') e encerrados são mata-mata
-  const koMap = {}; // "nameA|nameB" (sorted) → { winnerName, score }
-  // Mata-mata começa 27/Jun — usa data, não j.grp (que pode ter o grupo do time)
   const koStart = new Date('2026-06-27T00:00:00Z');
+  const r32End  = new Date('2026-07-04T00:00:00Z');
+
+  // Vencedores dos jogos encerrados do mata-mata
+  const koMap = {}; // "nameA|nameB" (sorted) → { winnerName, score }
   (jogos||[]).filter(j => j.status==='enc' && j.dateObj && j.dateObj >= koStart).forEach(j => {
     const hG = parseInt(j.gE)||0, aG = parseInt(j.gF)||0;
     let wName = null;
@@ -1208,6 +1209,24 @@ function renderChaveamento(grupos, jogos) {
     if (!wName) return;
     const key = [j.mn.toLowerCase(), j.vn.toLowerCase()].sort().join('|');
     koMap[key] = { winnerName: wName, score: `${hG}–${aG}` };
+  });
+
+  // ── Adversários REAIS da Rodada 32 (da ESPN) ──
+  // Resolve a 3ª colocada sem duplicar: usa o adversário real do time determinístico
+  function findTeamInGroups(name) {
+    const nl = name.toLowerCase();
+    for (const g of grupos) {
+      const t = g.times.find(t => t.nome.toLowerCase() === nl);
+      if (t) return { ...t, grpId: g.id };
+    }
+    return { nome: name, emoji: fl(name), grpId: '?', brasil: name === 'Brasil' };
+  }
+  const r32OppMap = {}; // team name lower → opponent team obj from ESPN
+  (jogos||[]).filter(j => j.dateObj && j.dateObj >= koStart && j.dateObj < r32End).forEach(j => {
+    const tH = findTeamInGroups(j.mn);
+    const tA = findTeamInGroups(j.vn);
+    r32OppMap[j.mn.toLowerCase()] = tA;
+    r32OppMap[j.vn.toLowerCase()] = tH;
   });
 
   function findWinner(tA, tB) {
@@ -1261,13 +1280,29 @@ function renderChaveamento(grupos, jogos) {
     return null;
   }
 
-  /* ── Carta R32 (times do grupo) ── */
+  /* ── Resolve R32: usa adversário real da ESPN para slots de 3ª colocada ── */
+  function getR32Teams(sA, sB) {
+    const tA = typeof sA==='string' ? gt(sA) : null; // sempre determinístico
+    let tB = typeof sB==='string' ? gt(sB) : (sB?.b3 ? best3(sB.b3) : null);
+    // Se há adversário real da ESPN para tA (evita duplicação de 3ªs)
+    if (tA && sB?.b3) {
+      const espnOpp = r32OppMap[tA.nome.toLowerCase()];
+      if (espnOpp) tB = espnOpp;
+    }
+    return { tA, tB };
+  }
+
+  /* ── Carta R32 ── */
   function r32Card(sA, sB, isThird=false) {
-    return matchCard(r32T(sA), r32T(sB), isThird?' bm-3':'');
+    const { tA, tB } = getR32Teams(sA, sB);
+    return matchCard(tA, tB, isThird?' bm-3':'');
   }
 
   /* ── Winner de um R32 matchup ── */
-  function r32W(sA, sB) { return findWinner(r32T(sA), r32T(sB)); }
+  function r32W(sA, sB) {
+    const { tA, tB } = getR32Teams(sA, sB);
+    return findWinner(tA, tB);
+  }
 
   /* ── Carta de rodada avançada: mostra vencedores ou TBD ── */
   function advCard(tA, tB) {
