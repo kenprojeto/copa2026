@@ -1194,7 +1194,9 @@ function renderChaveamento(grupos, jogos) {
   /* ── Mapa de vencedores de mata-mata (da API ESPN) ── */
   // Jogos sem grupo (grp==='?') e encerrados são mata-mata
   const koMap = {}; // "nameA|nameB" (sorted) → { winnerName, score }
-  (jogos||[]).filter(j => j.grp==='?' && j.status==='enc').forEach(j => {
+  // Mata-mata começa 27/Jun — usa data, não j.grp (que pode ter o grupo do time)
+  const koStart = new Date('2026-06-27T00:00:00Z');
+  (jogos||[]).filter(j => j.status==='enc' && j.dateObj && j.dateObj >= koStart).forEach(j => {
     const hG = parseInt(j.gE)||0, aG = parseInt(j.gF)||0;
     let wName = null;
     if      (j.homeWon===true)  wName = j.mn;
