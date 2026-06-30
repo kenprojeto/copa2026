@@ -1350,18 +1350,73 @@ function renderChaveamento(grupos, jogos) {
   // Final
   wm.final=findWinner(wm.sf1,wm.sf2);
 
-  /* ── Brasil msg dinâmica ── */
+  /* ── Brasil msg dinâmica — rastreia o caminho completo até a Final ── */
+  // Pares de R16 e a qual QF alimentam:
+  // M89+M90→QF97, M91+M92→QF98, M93+M94→QF99, M95+M96→QF100
+  // Brasil como 1°C: M81→M93→QF99→SF2→Final
+  // Brasil como 2°C: M76→M90→QF97→SF1→Final
+  function r16Opp(bSlot) {
+    // Dado o slot de R32 que o Brasil ganhou, retorna o adversário das Oitavas
+    const pairs = {81:82,82:81, 76:75,75:76, 73:74,74:73, 77:78,78:77,
+                   79:80,80:79, 83:84,84:83, 85:86,86:85, 87:88,88:87};
+    return wm[pairs[bSlot]] || null;
+  }
+  function qfOpp(bR16slot) {
+    // Dado o slot de R16 que Brasil ganhou, retorna adversário das Quartas
+    const pairs = {89:90,90:89, 91:92,92:91, 93:94,94:93, 95:96,96:95};
+    return wm[pairs[bR16slot]] || null;
+  }
+
   let brMsg = '🇧🇷 Torça pelo Brasil!';
-  const br1C=r32T('1C'), br2C=r32T('2C');
-  if (br1C?.brasil||br2C?.brasil) {
-    const brTeam = br1C?.brasil ? br1C : br2C;
-    const posLbl = br1C?.brasil ? '1°C' : '2°C';
-    const opp = br1C?.brasil ? r32T('2F') : r32T('1F');
-    if (wm[81]?.brasil) {
-      const nextOpp = wm[82] ? `vs <strong style="color:var(--branco)">${wm[82].emoji} ${wm[82].nome}</strong>` : 'aguardando adversário';
-      brMsg = `🇧🇷 Brasil nas Oitavas! ${nextOpp}`;
+
+  if (wm.final?.brasil) {
+    brMsg = '🇧🇷 🏆 BRASIL CAMPEÃO DO MUNDO! 🏆';
+  } else if (wm.sf1?.brasil || wm.sf2?.brasil) {
+    const opp = wm.sf1?.brasil ? wm.sf2 : wm.sf1;
+    brMsg = opp
+      ? `🇧🇷 Brasil na FINAL! vs <strong style="color:var(--branco)">${opp.emoji} ${opp.nome}</strong> · 19 Jul 🏆`
+      : '🇧🇷 Brasil na FINAL! 🏆 19 Jul · MetLife';
+  } else {
+    // Verifica QF → quem ganhou e qual o adversário da Semi
+    const brQF = [97,98,99,100].find(n => wm['qf'+n]?.brasil);
+    if (brQF) {
+      const qfPairs = {97:98,98:97,99:100,100:99};
+      const sfOpp = wm['qf'+qfPairs[brQF]];
+      brMsg = sfOpp
+        ? `🇧🇷 Brasil na Semi! vs <strong style="color:var(--branco)">${sfOpp.emoji} ${sfOpp.nome}</strong>`
+        : '🇧🇷 Brasil nas Semis! Aguardando adversário';
     } else {
-      brMsg = `🇧🇷 Brasil (${posLbl}) → vs <strong style="color:var(--branco)">${opp?.emoji||'🏴'} ${opp?.nome||'?'}</strong>`;
+      // Verifica R16 → quem ganhou e qual o adversário das Quartas
+      const brR16slot = [89,90,91,92,93,94,95,96].find(n => wm[n]?.brasil);
+      if (brR16slot) {
+        const opp = qfOpp(brR16slot);
+        brMsg = opp
+          ? `🇧🇷 Brasil nas Quartas! vs <strong style="color:var(--branco)">${opp.emoji} ${opp.nome}</strong>`
+          : '🇧🇷 Brasil nas Quartas! Aguardando adversário';
+      } else {
+        // Verifica R32 → quem ganhou e qual o adversário das Oitavas
+        const brR32slot = [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88].find(n => wm[n]?.brasil);
+        if (brR32slot) {
+          const opp = r16Opp(brR32slot);
+          brMsg = opp
+            ? `🇧🇷 Brasil nas Oitavas! vs <strong style="color:var(--branco)">${opp.emoji} ${opp.nome}</strong>`
+            : '🇧🇷 Brasil nas Oitavas! Aguardando adversário';
+        } else {
+          // Ainda na fase de grupos ou Rodada 32 não jogou
+          const { tA: brTeam, tB: r32Opp } = getR32Teams('1C', '2F');
+          const { tA: brTeam2, tB: r32Opp2 } = getR32Teams('1F', '2C');
+          if (brTeam?.brasil) {
+            brMsg = r32Opp
+              ? `🇧🇷 Brasil (1°C) vs <strong style="color:var(--branco)">${r32Opp.emoji} ${r32Opp.nome}</strong> · Rodada 32`
+              : '🇧🇷 Torça pelo Brasil na Rodada 32!';
+          } else if (brTeam2?.brasil || r32Opp2?.brasil) {
+            const op = r32Opp2?.brasil ? brTeam2 : r32Opp2;
+            brMsg = op
+              ? `🇧🇷 Brasil (2°C) vs <strong style="color:var(--branco)">${op.emoji} ${op.nome}</strong> · Rodada 32`
+              : '🇧🇷 Torça pelo Brasil na Rodada 32!';
+          }
+        }
+      }
     }
   }
 
